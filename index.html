@@ -3,161 +3,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="用 D3.js 交互理解页面布局：视觉层级、网格、间距、响应式重排与综合布局实验。">
-  <title>第 6 章 · 页面布局 | Page Layout</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230b1220'/%3E%3Cpath d='M7 7h18v18H7zM7 13h18M14 13v12' fill='none' stroke='%235eead4' stroke-width='2'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="./style.css">
-  <link rel="stylesheet" href="./extra.css">
+  <meta name="description" content="页面布局实战课：用 D3.js 交互实验学习信息层级、网格、空间分组、响应式与布局评估。">
+  <title>页面布局实战课 · Page Layout Studio</title>
+  <link rel="stylesheet" href="./styles.css">
   <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 </head>
-<body>
-  <header class="course-nav">
-    <a class="portal-link" href="#top" data-i18n="portal">← 课程门户</a>
-    <div class="course-crumbs" aria-label="Course chapters">
-      <span data-i18n="course">《可视化导论》</span><span class="slash">/</span><strong data-i18n="chapterShort">第 6 章 · 页面布局</strong>
-    </div>
-    <div class="lang-switch" role="group" aria-label="切换语言 / Switch language">
-      <button class="lang-btn active" data-lang="zh">中</button><button class="lang-btn" data-lang="en">EN</button>
-    </div>
-  </header>
-
-  <section class="chapter-hero" id="top">
-    <div class="hero-grid" aria-hidden="true"></div>
-    <div class="hero-copy">
-      <p class="eyebrow">VISUALIZATION · LAYOUT SYSTEMS</p>
-      <h1 data-i18n="title">第 6 章 · 页面布局</h1>
-      <p class="hero-sub" data-i18n="subtitle">从混乱到清晰：设计一个高质量数据看板</p>
-      <p class="hero-question" data-i18n="question">页面“能用”，为什么看起来仍然很差？</p>
-    </div>
-    <div class="hero-metric">
-      <span>CASE STUDY</span><strong>01</strong><small data-i18n="caseLabel">同一个 Campus Pulse 看板，五步完成重构</small>
-    </div>
-  </section>
-
-  <main class="page-shell">
-    <aside class="chapter-sidebar">
-      <p class="side-label" data-i18n="toc">章节目录</p>
-      <nav id="sectionNav"></nav>
-      <div class="progress-card">
-        <span data-i18n="progress">案例进度</span>
-        <div class="progress-track"><i id="progressBar"></i></div>
-        <strong id="progressText">01 / 05</strong>
-      </div>
-    </aside>
-
-    <div class="lesson-stage">
-      <div class="case-strip">
-        <span class="case-index">CASE 01</span>
-        <div><strong data-i18n="caseTitle">Campus Pulse 看板重构</strong><p data-i18n="caseDesc">每一节只修复一个布局问题，最后合成为完整方案。</p></div>
-        <span class="case-flow">CHAOS <i>→</i> CLARITY</span>
-      </div>
-
-      <section class="lesson-section active" id="section-hierarchy" data-section="hierarchy">
-        <div class="section-heading">
-          <div class="section-number">6.1</div>
-          <div><h2 data-i18n="s1title">布局就是信息层级</h2><p data-i18n="s1en">Layout as Visual Hierarchy</p></div>
-        </div>
-        <p class="section-lead" data-i18n="s1lead">如果所有模块看起来一样重要，读者就不知道先看哪里。</p>
-        <div class="tabs" role="tablist">
-          <button class="tab active" data-tab="explain" data-i18n="explain">📖 讲解</button>
-          <button class="tab" data-tab="code" data-i18n="code">⌨️ 关键代码</button>
-          <button class="tab" data-tab="demo" data-i18n="demo">▶️ 演示</button>
-        </div>
-        <div class="tab-panel active" data-panel="explain">
-          <div class="theory-grid">
-            <article><span class="kicker">01 / PRINCIPLE</span><h3 data-i18n="hierarchyTheory">页面布局决定信息被阅读的顺序</h3><p data-i18n="hierarchyText">视觉重量由尺寸、位置、对比和留白共同塑造。业务重要性越高，获得的空间与强调通常也应越多。</p></article>
-            <div class="formula-card"><span data-i18n="formulaLabel">视觉重量</span><strong>SIZE × POSITION<br>× CONTRAST × SPACE</strong><div class="mapping">TASK IMPORTANCE <b>↓</b> VISUAL IMPORTANCE <b>↓</b> LAYOUT</div></div>
-          </div>
-          <div class="key-point"><span>★ KEY POINT</span><p data-i18n="hierarchyKey">像把数据映射到视觉通道一样，把信息重要性映射到空间资源。</p></div>
-        </div>
-        <div class="tab-panel" data-panel="code">
-          <div class="code-layout"><pre><code><span class="kw">const</span> sizeScale = d3.scaleLinear()
-  .domain([<span class="num">1</span>, <span class="num">5</span>])
-  .range([<span class="num">1</span>, <span class="num">4</span>]);
-
-modules.forEach(d =&gt; {
-  d.span = sizeScale(d.importance);
-});</code></pre><div><h3 data-i18n="codeMeaning">代码表达的是设计决策</h3><p data-i18n="codeText">importance 不是装饰参数，而是内容优先级。D3 将它连续映射为卡片占据的列数。</p></div></div>
-        </div>
-        <div class="tab-panel" data-panel="demo">
-          <div class="demo-head"><div><span>READING ORDER EXPLORER</span><h3 data-i18n="readingDemo">阅读顺序实验器</h3></div><button class="outline-btn" id="showPath" data-i18n="showPath">显示启发式阅读路径</button></div>
-          <div class="demo-grid">
-            <div class="demo-canvas"><svg id="hierarchySvg" role="img" aria-label="Interactive dashboard hierarchy diagram"></svg></div>
-            <div class="demo-controls" id="hierarchyControls"></div>
-          </div>
-          <p class="method-note" data-i18n="heuristicNote">说明：路径是基于面积、位置和对比生成的教学启发式，不代表真实眼动数据。</p>
-        </div>
-      </section>
-
-      <section class="lesson-section" id="section-grid" data-section="grid">
-        <div class="section-heading"><div class="section-number">6.2</div><div><h2 data-i18n="s2title">用网格建立秩序</h2><p data-i18n="s2en">Building with a Grid</p></div></div>
-        <p class="section-lead" data-i18n="s2lead">每个模块单独看都没问题，组合后为什么仍显得不专业？</p>
-        <div class="tabs" role="tablist"><button class="tab active" data-tab="explain" data-i18n="explain">📖 讲解</button><button class="tab" data-tab="code" data-i18n="code">⌨️ 关键代码</button><button class="tab" data-tab="demo" data-i18n="demo">▶️ 演示</button></div>
-        <div class="tab-panel active" data-panel="explain">
-          <div class="concept-row"><article><span class="kicker">CASE / MISALIGNMENT</span><h3 data-i18n="gridTheory">网格是共享的空间坐标系</h3><p data-i18n="gridText">Margin 保护内容边界，Column 分配空间，Gutter 分隔相邻区域。网格的价值不是“画出格子”，而是让标题、卡片和图表共享可预测的边缘。</p></article><div class="mini-grid-diagram"><span>MARGIN</span><div class="mini-cols"><i></i><i></i><i></i><i></i><i></i><i></i></div><b>COL · GUTTER · COL</b></div></div>
-          <div class="principle-cards"><div><b>01</b><strong data-i18n="alignmentTitle">对齐建立关系</strong><p data-i18n="alignmentText">共享左边缘的元素会被感知为属于同一条信息轴。</p></div><div><b>02</b><strong data-i18n="consistencyTitle">重复降低认知负担</strong><p data-i18n="consistencyText">稳定的列宽与间距让读者预测下一块内容出现在哪里。</p></div></div>
-          <div class="key-point"><span>★ KEY POINT</span><p data-i18n="gridKey">Alignment isn't decoration. It reduces visual disorder.</p></div>
-        </div>
-        <div class="tab-panel" data-panel="code"><div class="code-layout"><pre><code><span class="kw">const</span> x = d3.scaleBand()
-  .domain(d3.range(columns))
-  .range([margin, width - margin])
-  .paddingInner(gutterRatio);
-
-card.transition().duration(<span class="num">500</span>)
-  .attr(<span class="str">"x"</span>, d =&gt; x(d.column));</code></pre><div><h3 data-i18n="bandTitle">把离散列映射到屏幕空间</h3><p data-i18n="bandText">scaleBand 不只服务于柱状图。它让布局模块与列索引共享同一套位置规则，列数或边距变化时仍能保持结构。</p></div></div></div>
-        <div class="tab-panel" data-panel="demo">
-          <div class="demo-head"><div><span>GRID PLAYGROUND</span><h3 data-i18n="gridDemo">交互式网格实验室</h3></div><div class="button-row"><button class="outline-btn" id="breakGrid" data-i18n="breakGrid">打乱网格</button><button class="solid-btn" id="snapGrid" data-i18n="snapGrid">对齐网格</button></div></div>
-          <div class="demo-grid"><div class="demo-canvas"><svg id="gridSvg" role="img" aria-label="Interactive grid layout diagram"></svg></div><div class="demo-controls" id="gridControls"></div></div>
-          <p class="method-note" data-i18n="gridNote">拖动参数观察共同坐标系如何改变卡片；“打乱”只增加位置偏移，不改变内容。</p>
-        </div>
-      </section>
-
-      <section class="lesson-section" id="section-spacing" data-section="spacing">
-        <div class="section-heading"><div class="section-number">6.3</div><div><h2 data-i18n="s3title">用空间表达关系</h2><p data-i18n="s3en">Grouping with Space</p></div></div>
-        <p class="section-lead" data-i18n="s3lead">间距不是剩余空间，而是“谁和谁属于一组”的视觉语法。</p>
-        <div class="tabs" role="tablist"><button class="tab active" data-tab="explain" data-i18n="explain">📖 讲解</button><button class="tab" data-tab="code" data-i18n="code">⌨️ 关键代码</button><button class="tab" data-tab="demo" data-i18n="demo">▶️ 演示</button></div>
-        <div class="tab-panel active" data-panel="explain"><div class="theory-grid"><article><span class="kicker">GESTALT / GROUPING</span><h3 data-i18n="spaceTheory">Whitespace is information</h3><p data-i18n="spaceText">接近原则说明：距离较近的元素更容易被视为一组。共同区域原则进一步说明：被同一容器包围的元素会产生更强的归属感。</p></article><div class="spacing-scale"><span>4</span><span>8</span><span>16</span><span>24</span><span>48</span><b data-i18n="spaceScale">由紧密关系到松散关系</b></div></div><div class="key-point"><span>★ KEY POINT</span><p data-i18n="spaceKey">间距大小应编码关系强弱：组内紧凑，组间舒展；不要让所有 margin 都是同一个值。</p></div></div>
-        <div class="tab-panel" data-panel="code"><div class="code-layout"><pre><code><span class="kw">const</span> space = {
-  xs: <span class="num">4</span>, sm: <span class="num">8</span>, md: <span class="num">16</span>,
-  lg: <span class="num">24</span>, xl: <span class="num">48</span>
-};
-
-<span class="kw">const</span> itemGap = space.sm;
-<span class="kw">const</span> groupGap = space.xl;</code></pre><div><h3 data-i18n="spaceCodeTitle">让间距携带语义</h3><p data-i18n="spaceCodeText">Spacing token 不是为了统一所有距离，而是为不同关系提供有限、可复用的层级。</p></div></div></div>
-        <div class="tab-panel" data-panel="demo"><div class="demo-head"><div><span>PROXIMITY PLAYGROUND</span><h3 data-i18n="spaceDemo">间距与分组实验</h3></div></div><div class="demo-grid"><div class="demo-canvas"><svg id="spacingSvg" role="img" aria-label="Interactive Gestalt proximity diagram"></svg></div><div class="demo-controls" id="spacingControls"></div></div><p class="method-note" data-i18n="spaceNote">虚线框是根据当前间距推断的视觉分组提示，不是客观感知测量。</p></div>
-      </section>
-
-      <section class="lesson-section" id="section-responsive" data-section="responsive">
-        <div class="section-heading"><div class="section-number">6.4</div><div><h2 data-i18n="s4title">屏幕变化，结构不能崩</h2><p data-i18n="s4en">Responsive Reflow</p></div></div>
-        <p class="section-lead" data-i18n="s4lead">手机端不是桌面端缩小版：空间改变时，结构和优先级也要重新决策。</p>
-        <div class="tabs" role="tablist"><button class="tab active" data-tab="explain" data-i18n="explain">📖 讲解</button><button class="tab" data-tab="code" data-i18n="code">⌨️ 关键代码</button><button class="tab" data-tab="demo" data-i18n="demo">▶️ 演示</button></div>
-        <div class="tab-panel active" data-panel="explain"><div class="concept-row"><article><span class="kicker">RESPONSIVE ≠ SCALE DOWN</span><h3 data-i18n="responsiveTheory">Responsive = Reflow + Priority</h3><p data-i18n="responsiveText">Breakpoint 不是某台设备的宽度，而是当前结构无法继续清晰表达的临界点。Reflow 负责重新排列，Priority 决定有限空间里谁先出现。</p></article><div class="reflow-diagram"><div><b>DESKTOP</b><i></i><i></i><i class="wide"></i></div><span>→</span><div><b>MOBILE</b><i class="wide"></i><i class="wide"></i><i class="wide"></i></div></div></div><div class="key-point"><span>★ KEY POINT</span><p data-i18n="responsiveKey">先保护阅读顺序，再决定列数；内容优先级比设备名称更可靠。</p></div></div>
-        <div class="tab-panel" data-panel="code"><div class="code-layout"><pre><code><span class="kw">const</span> mode = width &lt; <span class="num">560</span> ? <span class="str">"mobile"</span>
-  : width &lt; <span class="num">920</span> ? <span class="str">"tablet"</span>
-  : <span class="str">"desktop"</span>;
-
-cards.transition()
-  .attr(<span class="str">"transform"</span>, d =&gt;
-    <span class="str">`translate(${layout[mode](d)})`</span>);</code></pre><div><h3 data-i18n="responsiveCodeTitle">断点切换的是布局策略</h3><p data-i18n="responsiveCodeText">同一份内容数据进入三套重排规则；关键模块保持靠前，辅助模块从侧栏移到主流程。</p></div></div></div>
-        <div class="tab-panel" data-panel="demo"><div class="demo-head"><div><span>RESPONSIVE SIMULATOR</span><h3 data-i18n="responsiveDemo">响应式重排模拟器</h3></div><strong class="mode-badge" id="modeBadge">DESKTOP · 4 COL</strong></div><div class="viewport-control"><label><span data-i18n="viewportWidth">视口宽度</span><b id="viewportValue">1180 px</b></label><input id="viewportSlider" type="range" min="320" max="1440" value="1180"></div><div class="browser-stage"><div class="browser-chrome"><i></i><i></i><i></i><span>campus-pulse.edu/dashboard</span></div><svg id="responsiveSvg" role="img" aria-label="Responsive dashboard simulator"></svg></div><p class="method-note" data-i18n="responsiveNote">拖动视口宽度，观察模块不是等比缩小，而是在断点处重新排列。</p></div>
-      </section>
-
-      <section class="lesson-section" id="section-lab" data-section="lab">
-        <div class="section-heading"><div class="section-number">6.5</div><div><h2 data-i18n="s5title">综合布局实验室</h2><p data-i18n="s5en">Layout Lab</p></div></div>
-        <p class="section-lead" data-i18n="s5lead">把前四节的原则放在同一张画布上：拖动、吸附、检查，再解释你的布局决策。</p>
-        <div class="tabs" role="tablist"><button class="tab active" data-tab="explain" data-i18n="explain">📖 讲解</button><button class="tab" data-tab="code" data-i18n="code">⌨️ 关键代码</button><button class="tab" data-tab="demo" data-i18n="demo">▶️ 演示</button></div>
-        <div class="tab-panel active" data-panel="explain"><div class="theory-grid"><article><span class="kicker">SYNTHESIS / LAYOUT AUDIT</span><h3 data-i18n="labTheory">好布局是一组可解释的取舍</h3><p data-i18n="labText">层级回答“先看什么”，网格回答“如何建立秩序”，间距回答“哪些内容相关”，响应式回答“空间不足时如何重排”。综合设计不是追求唯一答案，而是让这些判断彼此一致。</p></article><div class="formula-card"><span>LAYOUT CHECK</span><strong>HIERARCHY<br>ALIGNMENT<br>SPACING<br>OVERFLOW</strong><div class="mapping" data-i18n="labFormula">四类证据，一次解释</div></div></div><div class="key-point"><span>★ KEY POINT</span><p data-i18n="labKey">布局评分只提供教学反馈，并非客观的审美标准。</p></div></div>
-        <div class="tab-panel" data-panel="code"><div class="code-layout"><pre><code><span class="kw">const</span> score =
-  alignment * <span class="num">.35</span> +
-  spacing   * <span class="num">.25</span> +
-  hierarchy * <span class="num">.25</span> +
-  overflow  * <span class="num">.15</span>;
-
-drag.on(<span class="str">"end"</span>, snapToGrid);</code></pre><div><h3 data-i18n="labCodeTitle">把抽象原则变成可检查的迹象</h3><p data-i18n="labCodeText">对齐误差、间距规律、主模块面积和越界情况组成启发式反馈；它帮助讨论，不替代设计判断。</p></div></div></div>
-        <div class="tab-panel" data-panel="demo"><div class="demo-head"><div><span>LAYOUT LAB · D3.DRAG</span><h3 data-i18n="labDemo">拖拽式布局检查器</h3></div><div class="button-row"><button class="outline-btn" id="messLab" data-i18n="messLab">制造问题</button><button class="solid-btn" id="toggleXray" data-i18n="xray">开启 X-Ray</button></div></div><div class="lab-grid"><div class="demo-canvas lab-canvas"><svg id="labSvg" role="img" aria-label="Draggable layout lab"></svg></div><aside class="score-panel"><span>LAYOUT CHECK</span><div class="score-ring"><strong id="scoreValue">86</strong><small>/ 100</small></div><div id="scoreMetrics"></div><p data-i18n="scoreDisclaimer">教学启发式，不是审美结论。</p></aside></div><p class="method-note" data-i18n="dragNote">拖动模块并松开：卡片会吸附到最近网格。开启 X-Ray 查看列线、间距与对齐误差。</p></div>
-      </section>
-    </div>
-  </main>
-  <script src="./app.js"></script>
+<body class="portal-page">
+  <header id="portalHero" class="portal-hero"></header>
+  <nav id="portalNav" class="portal-nav" aria-label="课程导航"></nav>
+  <main id="portalMain"></main>
+  <footer id="siteFooter" class="site-footer"></footer>
+  <script src="./course-data.js"></script>
+  <script src="./portal.js"></script>
 </body>
 </html>
