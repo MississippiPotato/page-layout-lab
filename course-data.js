@@ -33,11 +33,14 @@
       toc: B('本章目录', 'Chapter Contents'),
       objective: B('学习目标', 'Learning Outcome'),
       caseProblem: B('案例问题', 'Case Problem'),
+      caseContext: B('Campus Pulse 现场', 'Campus Pulse Context'),
       theory: B('理论与判断规则', 'Theory and Decision Rules'),
       keyPoint: B('⭐ 关键点', '⭐ Key Point'),
       pitfall: B('常见误区', 'Common Pitfall'),
       keyCode1: B('关键点 1 · 把概念变成可计算参数', 'Key 1 · Turn the concept into a computable parameter'),
       keyCode2: B('关键点 2 · 用 D3 保持对象连续性', 'Key 2 · Preserve object constancy with D3'),
+      codeSimplified: B('演示核心逻辑 · 为教学简化', 'Demo Core Logic · Simplified for Learning'),
+      observe: B('对应演示', 'Demo mapping'),
       why: B('为什么这样写', 'Why this works'),
       try: B('动手试一试', 'Try it'),
       reset: B('重置', 'Reset'),
@@ -56,6 +59,7 @@
         title: B('先诊断，再布局', 'Diagnose Before Layout'),
         desc: B('从用户任务和内容优先级出发，识别“看起来不对”的真正原因。', 'Start with user tasks and content priority to identify why a page feels wrong.'),
         outcome: B('能区分层级、对齐、分组与溢出问题，并建立修复顺序。', 'Distinguish hierarchy, alignment, grouping, and overflow issues, then set a repair order.'),
+        case: B('教务运营人员每天先判断活跃趋势是否异常，再定位完成率和课程排行。旧稿里主图与 KPI 面积接近、边缘错位、最近活动孤立，首屏没有稳定的阅读顺序。', 'Academic operations staff first check whether activity trends are abnormal, then inspect completion and course rankings. In the draft, the chart and KPIs compete in size, edges drift, and recent activity is isolated, so the first screen has no stable reading order.'),
         tags: [B('布局审计', 'Layout audit'), B('任务优先级', 'Task priority'), B('阅读顺序', 'Reading order')],
         sections: [
           S('1-1','布局问题不是装饰问题','Layout Problems Are Not Decoration','先问用户要完成什么，再问页面该长什么样。','Ask what users must accomplish before asking what the page should look like.','audit',[
@@ -89,6 +93,7 @@
         title: B('网格、对齐与比例', 'Grid, Alignment, and Proportion'),
         desc: B('建立共享空间坐标系，让模块之间的关系稳定、可预测。', 'Build a shared spatial coordinate system so relationships remain stable and predictable.'),
         outcome: B('能设计列、边距、沟槽与内容比例，并解释每个选择。', 'Design columns, margins, gutters, and content proportions—and explain each choice.'),
+        case: B('第一章已经确认“每周活跃趋势”是核心任务。现在需要把这项优先级落到可复用的 12 列坐标、共享边缘和稳定栏宽中，避免每张卡片各自寻找位置。', 'Chapter 1 established Weekly Activity as the core task. Now that priority must become a reusable 12-column coordinate system, shared edges, and stable column widths so cards no longer position themselves independently.'),
         tags: [B('网格系统', 'Grid system'), B('共享边缘', 'Shared edges'), B('视觉节奏', 'Visual rhythm')],
         sections: [
           S('2-1','网格是一套空间坐标','A Grid Is a Spatial Coordinate System','列不是装饰线，而是组件共享的定位语言。','Columns are not decorative lines; they are a shared positioning language.','grid',[
@@ -122,6 +127,7 @@
         title: B('空间分组与页面组成', 'Spatial Grouping and Composition'),
         desc: B('用接近、共同区域、留白与布局模式表达内容关系。', 'Use proximity, common region, whitespace, and composition patterns to express relationships.'),
         outcome: B('能让读者无需边框也理解哪些信息属于一组。', 'Help readers understand grouping without relying on borders everywhere.'),
+        case: B('网格已经让边缘整齐，但六个模块仍像彼此无关的盒子。需要让活跃与完成率形成 KPI 组，让排行成为辅助上下文，并用组内、组间距离解释这种关系。', 'The grid has aligned the edges, yet the six modules still feel like unrelated boxes. Activity and completion must form a KPI group, ranking must read as supporting context, and within- versus between-group gaps must explain those relationships.'),
         tags: [B('格式塔', 'Gestalt'), B('留白', 'Whitespace'), B('页面模式', 'Page patterns')],
         sections: [
           S('3-1','接近原则：距离就是关系','Proximity: Distance Is Relationship','同组靠近，异组拉开。','Keep related items close and separate different groups.','proximity',[
@@ -155,6 +161,7 @@
         title: B('响应式与可访问布局', 'Responsive and Accessible Layout'),
         desc: B('让结构在屏幕、文字和输入方式变化时仍然成立。', 'Keep structure meaningful as screens, text size, and input methods change.'),
         outcome: B('能用内容约束确定断点，并保证视觉顺序与 DOM 顺序一致。', 'Set content-driven breakpoints and keep visual order aligned with DOM order.'),
+        case: B('桌面版的层级和分组已经清楚，但在 768px、375px 与 200% 文字缩放下，主图会变窄、卡片固定高度失效、触控目标变小。断点必须由这些内容约束触发。', 'Hierarchy and grouping are clear on desktop, but at 768px, 375px, and 200% text zoom the main chart narrows, fixed card heights fail, and touch targets shrink. Those content constraints must trigger the breakpoints.'),
         tags: [B('重排', 'Reflow'), B('内容优先级', 'Content priority'), B('可访问性', 'Accessibility')],
         sections: [
           S('4-1','响应式不是等比缩小','Responsive Is Not Scale-Down','结构要重排，而不是把桌面压成邮票。','Structure must reflow, not shrink into a desktop postage stamp.','responsive',[
@@ -188,6 +195,7 @@
         title: B('Campus Pulse 综合重构', 'Campus Pulse Capstone'),
         desc: B('把前四章的决策合成一个可拖拽、可审计、可解释的最终方案。', 'Combine the first four chapters into a draggable, auditable, explainable final solution.'),
         outcome: B('能完成从问题诊断到多屏验证的完整布局工作流。', 'Complete a full layout workflow from diagnosis to multi-screen validation.'),
+        case: B('前四章已经形成任务优先级、网格、分组距离和断点规则。最终评审要求回放每一步只解决什么问题，并交付可拖拽审计、误差显影和多屏设计说明。', 'The first four chapters produced task priorities, a grid, grouping gaps, and breakpoint rules. The final review requires evidence of what each step fixes, plus a draggable audit, visible error annotations, and a multi-screen rationale.'),
         tags: [B('前后对比', 'Before/after'), B('布局实验室', 'Layout lab'), B('X-Ray 审计', 'X-Ray audit')],
         sections: [
           S('5-1','回放完整重构','Replay the Full Redesign','拖动时间线，看同一个看板如何逐步变好。','Scrub the timeline to see one dashboard improve step by step.','beforeafter',[
