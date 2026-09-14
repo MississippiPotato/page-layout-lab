@@ -5,7 +5,9 @@
   const params = new URLSearchParams(location.search);
   let lang = params.get('lang') || localStorage.getItem('layout-course-lang') || 'zh';
   if (!['zh', 'en'].includes(lang)) lang = 'zh';
-  let activeSection = 0;
+  const routeSection = Number(params.get('section'));
+  let activeSection = Number.isInteger(routeSection) ? Math.max(0, Math.min(chapter.sections.length - 1, routeSection)) : 0;
+  let activeTab = ['explain', 'code', 'demo'].includes(params.get('tab')) ? params.get('tab') : 'explain';
   const tx = value => typeof value === 'string' ? value : value[lang];
   const esc = text => String(text).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
   const linkFor = href => `${href}${href.includes('?') ? '&' : '?'}lang=${lang}`;
@@ -32,10 +34,34 @@
     priority: [`const visible = modules\n  .filter(d => width > d.minWidth || d.priority >= 4)\n  .sort((a,b) => b.priority - a.priority);`, `const visualOrder = visible.map(d => d.id);\nconst domOrder = modules.map(d => d.id);\nreportOrderConflict(visualOrder, domOrder);`],
     accessibility: [`const fontPx = baseFont * zoom / 100;\nconst requiredHeight = lines * fontPx * lineHeight + padding * 2;`, `cards.attr("height", d => Math.max(d.minHeight, requiredHeight(d)))\n  .attr("aria-label", d => d.label);\ntargets.attr("r", targetSize / 2);`],
     breakpoint: [`const fails = chartWidth < minChart || navWidth > availableWidth;\nconst mode = fails ? "stack" : "columns";`, `if (mode !== previousMode) {\n  cards.transition().duration(400).attr("transform", reflow);\n  breakpointLabel.text(\`switch @ \${width}px\`);\n}`],
-    beforeafter: [`const interpolate = d3.interpolateObject(badLayout[id], goodLayout[id]);\nconst current = interpolate(progress);`, `cards.data(modules, d => d.id).join("g")\n  .transition().duration(180)\n  .attr("transform", d => position(currentLayout(d)));`],
+    beforeafter: [`const layout = modules.map(d => ({\n  ...d, ...stageLayouts[stage][d.id]\n}));`, `cards.data(layout, d => d.id).join("g")\n  .transition().duration(420)\n  .attr("transform", d => \`translate(\${d.x},\${d.y})\`);`],
     lab: [`const drag = d3.drag().on("drag", (event,d) => {\n  d.x = clamp(event.x - d.w/2); d.y = clamp(event.y - d.h/2);\n  updateLayout(d); updateMetrics();\n});`, `const score = d3.sum([\n  alignment * .35, spacing * .25,\n  hierarchy * .25, overflow * .15\n]);`],
     xray: [`const error = card.x - nearestGridLine(card.x);\nannotations.push({ id: card.id, error, fix: -error });`, `annotation.selectAll("line").data(errors, d => d.id).join("line")\n  .attr("class", d => Math.abs(d.error) > 4 ? "error-line" : "guide-line");`],
     multiscreen: [`const screens = [1200, 768, 375];\nconst views = screens.map(width => ({ width, cards: layoutByWidth(width) }));`, `screenG.selectAll("g.card").data(d => d.cards, d => d.id).join("g")\n  .attr("transform", d => \`translate(\${d.x},\${d.y})\`);`]
+  };
+
+  const B = (zh, en) => ({ zh, en });
+  const CODE_META = {
+    audit:[B('按问题类型建立诊断状态','Model issue types as diagnostic state'),B('把勾选结果换算成覆盖率','Convert selections into audit coverage'),B('勾选四类症状，观察覆盖率与画布标注同步变化。','Select the four symptoms and watch coverage and canvas annotations update together.')],
+    matrix:[B('把频率与影响映射到坐标','Map frequency and impact to position'),B('拖动后重新计算任务优先级','Recalculate task priority after dragging'),B('拖动模块；坐标与右侧优先级排序使用同一份数据。','Drag a module; its position and priority ranking use the same data.')],
+    hierarchy:[B('把重要性映射为空间权重','Map importance to spatial weight'),B('用稳定 ID 更新模块位置','Update module positions with stable IDs'),B('改变重要性，观察面积、位置和阅读路径如何共同变化。','Change importance and observe area, position, and reading path together.')],
+    path:[B('建立显著性排序假设','Build a salience-order hypothesis'),B('把排序结果绘制成阅读路径','Draw the ordered result as a reading path'),B('路径只表达当前权重假设，不代表真实眼动数据。','The path expresses the current weighting hypothesis, not eye-tracking evidence.')],
+    grid:[B('由列数、边距与沟槽计算坐标','Compute coordinates from columns, margins, and gutters'),B('用共享列线更新卡片位置','Update cards on shared column lines'),B('调整网格参数，再打乱并吸附卡片，比较平均对齐误差。','Adjust the grid, then break and snap cards while comparing mean alignment error.')],
+    alignment:[B('计算最近的共享参考线','Find the nearest shared reference line'),B('用误差驱动吸附反馈','Use measured error to drive snapping feedback'),B('从打乱状态开始，吸附后观察误差归零。','Start from the broken state and watch error fall to zero after snapping.')],
+    ratio:[B('由任务比例计算主栏宽度','Compute main-column width from task ratio'),B('用行长区间判断可读性风险','Evaluate readability with a line-length range'),B('拖动主栏比例，观察行长与侧栏上下文的权衡。','Drag the main-column ratio and observe the trade-off between line length and sidebar context.')],
+    rhythm:[B('把基础单位扩展成间距尺度','Expand a base unit into a spacing scale'),B('用同一尺度生成垂直节奏','Generate vertical rhythm from one scale'),B('改变基础单位与内容行数，检查重复基线是否仍成立。','Change the base unit and row count to test whether the repeated baseline still holds.')],
+    proximity:[B('计算组内与组间距离比','Calculate the between/within gap ratio'),B('把距离比转换成分组反馈','Turn the gap ratio into grouping feedback'),B('让两种距离逐渐接近，观察分组何时变得含糊。','Bring the two gaps closer and observe when grouping becomes ambiguous.')],
+    region:[B('按语义分组计算共同区域','Compute common regions by semantic group'),B('让区域随分组状态显隐','Show or hide regions with grouping state'),B('比较只有距离与增加共同区域后的分组强度。','Compare distance-only grouping with grouping reinforced by common regions.')],
+    density:[B('由模块数量与内边距计算卡片','Compute cards from count and padding'),B('把密度转换成拥挤风险','Convert density into crowding risk'),B('增加模块或减少内边距，观察扫描风险如何上升。','Add modules or reduce padding and observe scanning risk rise.')],
+    composition:[B('按主要任务选择页面模式','Select a composition from the primary task'),B('用同一模块数据切换组成','Recompose the same modules by stable ID'),B('切换监控、阅读、填写任务，比较同一内容的三种页面组成。','Switch among monitoring, reading, and input tasks to compare three compositions of the same content.')],
+    responsive:[B('按内容阈值选择布局模式','Choose a layout mode from content thresholds'),B('在阈值处重排而非整体缩小','Reflow at thresholds instead of shrinking'),B('拖动视口宽度，观察列数与顺序在阈值处改变。','Drag viewport width and watch columns and order change at thresholds.')],
+    priority:[B('按任务优先级确定窄屏顺序','Set narrow-screen order from task priority'),B('比较视觉顺序与内容顺序','Compare visual and content order'),B('缩窄视口后，主图会提前而不是被等比压缩。','Narrow the viewport; the primary chart moves earlier instead of shrinking proportionally.')],
+    accessibility:[B('由文字缩放计算所需高度','Compute required height from text zoom'),B('同时验证触控目标下限','Validate the touch-target minimum'),B('把文字放大到 200%，并将触控目标调到 44px 以下比较风险。','Zoom text to 200% and compare targets above and below 44px.')],
+    breakpoint:[B('用内容最低宽度触发断点','Trigger breakpoints from minimum content width'),B('只在约束失败时改变结构','Change structure only when a constraint fails'),B('改变容器与图表最低宽度，观察触发堆叠的真实条件。','Change container and chart minimum widths to observe the actual stacking condition.')],
+    beforeafter:[B('为每个阶段保存独立布局状态','Store an explicit layout for each stage'),B('用稳定 ID 过渡到下一阶段','Transition to the next stage with stable IDs'),B('逐格拖动时间线；每一步只引入一种布局决策。','Scrub one step at a time; each stage introduces one layout decision.')],
+    lab:[B('拖动时更新同一份卡片数据','Update the same card data while dragging'),B('按四项可解释指标合成评分','Combine four explainable metrics'),B('制造问题、拖动模块并重置，比较每项指标的变化。','Make the layout messy, drag modules, and reset while comparing each metric.')],
+    xray:[B('计算到目标网格的误差向量','Compute error vectors to target grid lines'),B('把误差与修复方向画在卡片旁','Draw errors and repair directions beside cards'),B('红色误差线指出偏移，间距标注给出当前值与目标值。','Red error lines show offsets; gap labels compare current and target values.')],
+    multiscreen:[B('从同一内容模型生成多屏布局','Generate multi-screen layouts from one content model'),B('在各宽度复用稳定模块身份','Reuse stable module IDs at every width'),B('提高文字缩放，检查三个视图何时暴露固定高度风险。','Increase text zoom and inspect when fixed-height risks appear across the three views.')]
   };
 
   function renderApp() {
@@ -64,15 +90,17 @@
 
   function renderSection(s, i) {
     const active = i === activeSection ? ' active' : '';
+    const tab = i === activeSection ? activeTab : 'explain';
     const theory = s.theory.map(d => `<li>${tx(d)}</li>`).join('');
     const snippets = CODE[s.demo] || CODE.hierarchy;
+    const codeMeta = CODE_META[s.demo] || CODE_META.hierarchy;
     return `<article class="lesson-section${active}" data-section-panel="${i}">
       <header class="section-banner"><span class="section-number">${chapterIndex + 1}.${i + 1}</span><div><h2>${tx(s.title)}</h2><p class="section-en">${s.title.en}</p><p>${tx(s.subtitle)}</p></div></header>
-      <div class="lesson-tabs" role="tablist"><button class="active" data-tab="explain">${tx(C.ui.explain)}</button><button data-tab="code">${tx(C.ui.code)}</button><button data-tab="demo">${tx(C.ui.demo)}</button></div>
-      <section class="tab-panel active" data-panel="explain"><div class="explain-lead"><div class="case-block"><h3>${tx(C.ui.caseProblem)}</h3><p>${tx(s.subtitle)}</p></div><div class="theory-block"><h3>${tx(C.ui.theory)}</h3><ul>${theory}</ul></div></div><div class="key-pit-grid"><div class="teaching-note"><b>${tx(C.ui.keyPoint)}</b><p>${tx(s.key)}</p></div><div class="teaching-note pit"><b>${tx(C.ui.pitfall)}</b><p>${tx(s.pit)}</p></div></div></section>
-      <section class="tab-panel" data-panel="code"><div class="code-stack"><article class="code-point"><header><h3>${tx(C.ui.keyCode1)}</h3><span>01 / MODEL</span></header><pre><code>${highlight(snippets[0])}</code></pre><p><b>${tx(C.ui.why)}：</b> ${tx(s.key)}</p></article><article class="code-point"><header><h3>${tx(C.ui.keyCode2)}</h3><span>02 / UPDATE</span></header><pre><code>${highlight(snippets[1])}</code></pre><p><b>${tx(C.ui.pitfall)}：</b> ${tx(s.pit)}</p></article></div></section>
-      <section class="tab-panel" data-panel="demo"><div class="demo-intro"><div><h3>${tx(C.ui.try)}</h3><p>${tx(s.subtitle)}</p></div><span class="demo-tag">D3.JS · INTERACTIVE</span></div><div class="demo-mount" id="demo-${s.id}"></div></section>
-    </article>`;
+      <div class="lesson-tabs" role="tablist" aria-label="${tx(s.title)}"><button id="tab-${s.id}-explain" role="tab" aria-controls="panel-${s.id}-explain" aria-selected="${tab === 'explain'}" tabindex="${tab === 'explain' ? '0' : '-1'}" class="${tab === 'explain' ? 'active' : ''}" data-tab="explain">${tx(C.ui.explain)}</button><button id="tab-${s.id}-code" role="tab" aria-controls="panel-${s.id}-code" aria-selected="${tab === 'code'}" tabindex="${tab === 'code' ? '0' : '-1'}" class="${tab === 'code' ? 'active' : ''}" data-tab="code">${tx(C.ui.code)}</button><button id="tab-${s.id}-demo" role="tab" aria-controls="panel-${s.id}-demo" aria-selected="${tab === 'demo'}" tabindex="${tab === 'demo' ? '0' : '-1'}" class="${tab === 'demo' ? 'active' : ''}" data-tab="demo">${tx(C.ui.demo)}</button></div>
+      <section id="panel-${s.id}-explain" aria-labelledby="tab-${s.id}-explain" role="tabpanel" class="tab-panel${tab === 'explain' ? ' active' : ''}" data-panel="explain"><div class="explain-lead"><div class="case-block"><h3>${tx(C.ui.caseProblem)}</h3><p class="case-question">${tx(s.subtitle)}</p><div class="case-context"><b>${tx(C.ui.caseContext)}</b><span>${tx(chapter.case)}</span></div></div><div class="theory-block"><h3>${tx(C.ui.theory)}</h3><ul>${theory}</ul></div></div><div class="key-pit-grid"><div class="teaching-note"><b>${tx(C.ui.keyPoint)}</b><p>${tx(s.key)}</p></div><div class="teaching-note pit"><b>${tx(C.ui.pitfall)}</b><p>${tx(s.pit)}</p></div></div></section>
+      <section id="panel-${s.id}-code" aria-labelledby="tab-${s.id}-code" role="tabpanel" class="tab-panel${tab === 'code' ? ' active' : ''}" data-panel="code"><div class="code-mode">${tx(C.ui.codeSimplified)}</div><div class="code-stack"><article class="code-point"><header><h3>${tx(codeMeta[0])}</h3><span>01 / MODEL</span></header><pre><code>${highlight(snippets[0])}</code></pre><p><b>${tx(C.ui.why)}：</b> ${tx(s.key)}</p></article><article class="code-point"><header><h3>${tx(codeMeta[1])}</h3><span>02 / UPDATE</span></header><pre><code>${highlight(snippets[1])}</code></pre><p><b>${tx(C.ui.observe)}：</b> ${tx(codeMeta[2])}</p></article></div></section>
+      <section id="panel-${s.id}-demo" aria-labelledby="tab-${s.id}-demo" role="tabpanel" class="tab-panel${tab === 'demo' ? ' active' : ''}" data-panel="demo"><div class="demo-intro"><div><h3>${tx(C.ui.try)}</h3><p>${tx(s.subtitle)}</p></div><span class="demo-tag">D3.JS · INTERACTIVE</span></div><div class="demo-mount" id="demo-${s.id}"></div></section>
+      </article>`;
   }
 
   function highlight(code) {
@@ -93,19 +121,43 @@
     document.querySelectorAll('.lesson-tabs button').forEach(btn => btn.addEventListener('click', () => {
       const section = btn.closest('.lesson-section');
       section.querySelectorAll('.lesson-tabs button').forEach(b => b.classList.toggle('active', b === btn));
+      section.querySelectorAll('.lesson-tabs button').forEach(b => { b.setAttribute('aria-selected', b === btn ? 'true' : 'false'); b.tabIndex = b === btn ? 0 : -1; });
       section.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.dataset.panel === btn.dataset.tab));
+      activeTab = btn.dataset.tab;
+      updateRouteState(true);
       if (btn.dataset.tab === 'demo') renderDemo(chapter.sections[+section.dataset.sectionPanel]);
+    }));
+    document.querySelectorAll('.lesson-tabs').forEach(list => list.addEventListener('keydown', event => {
+      if (!['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return;
+      const tabs = [...list.querySelectorAll('[role="tab"]')];
+      const current = tabs.indexOf(document.activeElement);
+      if (current < 0) return;
+      event.preventDefault();
+      const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : (current + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+      tabs[next].focus();
+      tabs[next].click();
     }));
   }
 
+  function updateRouteState(push = false) {
+    const url = new URL(location.href);
+    url.searchParams.set('lang', lang);
+    url.searchParams.set('section', activeSection);
+    url.searchParams.set('tab', activeTab);
+    history[push ? 'pushState' : 'replaceState']({}, '', url);
+  }
+
   function switchSection(i) {
-    activeSection = i; renderApp();
+    activeSection = i;
+    activeTab = 'explain';
+    updateRouteState(true);
+    renderApp();
     document.querySelector('.lesson-shell').scrollIntoView({behavior:'smooth',block:'start'});
   }
 
   function demoBase(section, controls, extra = '') {
     const mount = document.getElementById(`demo-${section.id}`); if (!mount) return null;
-    mount.innerHTML = `<div class="demo-shell"><aside class="demo-controls"><h4>${lang === 'zh' ? '实验参数' : 'LAB CONTROLS'}</h4>${controls}${extra}</aside><div class="demo-canvas"><svg viewBox="0 0 720 430" role="img" aria-label="${esc(tx(section.title))}"></svg><div class="demo-status"></div></div></div>`;
+    mount.innerHTML = `<div class="demo-shell"><aside class="demo-controls"><h4>${lang === 'zh' ? '实验参数' : 'LAB CONTROLS'}</h4>${controls}${extra}</aside><div class="demo-canvas"><svg viewBox="0 0 720 430" role="img" aria-label="${esc(tx(section.title))}"></svg><div class="demo-status" role="status" aria-live="polite"></div></div></div>`;
     return { mount, svg:d3.select(mount).select('svg'), status:mount.querySelector('.demo-status'), controls:mount.querySelector('.demo-controls') };
   }
   const range = (id,label,min,max,value,step=1) => `<div class="control-group"><label for="${id}"><span>${label}</span><b id="${id}Out">${value}</b></label><input id="${id}" type="range" min="${min}" max="${max}" value="${value}" step="${step}"></div>`;
@@ -145,7 +197,7 @@
     const b=demoBase(section,`<p style="font-size:.8rem;color:var(--muted)">${lang==='zh'?'拖动模块：横轴是使用频率，纵轴是决策影响。':'Drag modules: frequency is horizontal; decision impact is vertical.'}</p><div class="metric-list" id="priorityList"></div>`);const svg=b.svg, x=d3.scaleLinear().domain([1,5]).range([75,675]),y=d3.scaleLinear().domain([1,5]).range([365,45]);
     const data=baseModules().slice(0,5).map((d,i)=>({...d,frequency:[4.6,4.2,3.3,2.1,1.5][i],impact:[4.8,3.4,4.0,2.6,1.5][i]}));
     svg.append('g').attr('class','axis').attr('transform','translate(0,365)').call(d3.axisBottom(x).ticks(5));svg.append('g').attr('class','axis').attr('transform','translate(75,0)').call(d3.axisLeft(y).ticks(5));svg.append('line').attr('x1',x(3)).attr('x2',x(3)).attr('y1',45).attr('y2',365).attr('class','guide-line');svg.append('line').attr('x1',75).attr('x2',675).attr('y1',y(3)).attr('y2',y(3)).attr('class','guide-line');svg.append('text').attr('class','svg-meta').attr('x',675).attr('y',405).attr('text-anchor','end').text(lang==='zh'?'任务频率 →':'TASK FREQUENCY →');svg.append('text').attr('class','svg-meta').attr('transform','translate(22,45) rotate(-90)').text(lang==='zh'?'决策影响 →':'DECISION IMPACT →');
-    const update=()=>{const node=svg.selectAll('g.node').data(data,d=>d.id).join(enter=>{const g=enter.append('g').attr('class','node drag-card');g.append('circle').attr('r',28).attr('fill',chapter.accent).attr('fill-opacity','.88');g.append('text').attr('text-anchor','middle').attr('dy','.32em').attr('fill','#fff').attr('font-size',9).attr('font-weight',750);return g;}).attr('transform',d=>`translate(${x(d.frequency)},${y(d.impact)})`);node.select('text').text(d=>nameOf(d.id));node.call(d3.drag().on('drag',(e,d)=>{d.frequency=Math.max(1,Math.min(5,x.invert(e.x)));d.impact=Math.max(1,Math.min(5,y.invert(e.y)));update()}));const ranked=[...data].sort((a,b)=>b.frequency*b.impact-a.frequency*a.impact);b.controls.querySelector('#priorityList').innerHTML=ranked.slice(0,4).map((d,i)=>`<div class="metric-row"><span>0${i+1} ${nameOf(d.id)}</span><b>${(d.frequency*d.impact).toFixed(1)}</b><i><b style="width:${d.frequency*d.impact/25*100}%"></b></i></div>`).join('');setStatus(b,`当前核心层：${nameOf(ranked[0].id)}。优先级来自频率 × 影响。`,`Current core layer: ${nameOf(ranked[0].id)}. Priority comes from frequency × impact.`)};update();
+    const update=()=>{const node=svg.selectAll('g.node').data(data,d=>d.id).join(enter=>{const g=enter.append('g').attr('class','node drag-card');g.append('circle').attr('r',28).attr('fill',chapter.accent).attr('fill-opacity','.88');g.append('text').attr('text-anchor','middle').attr('dy','.32em').attr('fill','#fff').attr('font-size',9).attr('font-weight',750);return g;}).attr('transform',d=>`translate(${x(d.frequency)},${y(d.impact)})`).attr('tabindex',0).attr('role','slider').attr('aria-label',d=>`${nameOf(d.id)} · ${lang==='zh'?'方向键调整频率与影响':'Use arrow keys to adjust frequency and impact'}`).on('keydown',(e,d)=>{const step=.2;if(e.key==='ArrowLeft')d.frequency-=step;else if(e.key==='ArrowRight')d.frequency+=step;else if(e.key==='ArrowUp')d.impact+=step;else if(e.key==='ArrowDown')d.impact-=step;else return;e.preventDefault();d.frequency=Math.max(1,Math.min(5,d.frequency));d.impact=Math.max(1,Math.min(5,d.impact));update()});node.select('text').text(d=>nameOf(d.id));node.call(d3.drag().on('drag',(e,d)=>{d.frequency=Math.max(1,Math.min(5,x.invert(e.x)));d.impact=Math.max(1,Math.min(5,y.invert(e.y)));update()}));const ranked=[...data].sort((a,b)=>b.frequency*b.impact-a.frequency*a.impact);b.controls.querySelector('#priorityList').innerHTML=ranked.slice(0,4).map((d,i)=>`<div class="metric-row"><span>0${i+1} ${nameOf(d.id)}</span><b>${(d.frequency*d.impact).toFixed(1)}</b><i><b style="width:${d.frequency*d.impact/25*100}%"></b></i></div>`).join('');setStatus(b,`当前核心层：${nameOf(ranked[0].id)}。优先级来自频率 × 影响。`,`Current core layer: ${nameOf(ranked[0].id)}. Priority comes from frequency × impact.`)};update();
   }
 
   function hierarchyLayout(data){const sorted=[...data].sort((a,b)=>b.importance-a.importance),scale=d3.scaleLinear().domain([1,5]).range([120,370]);let x=38,y=55,rowH=0;return sorted.map(d=>{const w=Math.min(scale(d.importance),640);const h=d.importance>=5?160:d.importance>=3?94:68;if(x+w>680){x=38;y+=rowH+15;rowH=0}const out={...d,x,y,w,h};x+=w+15;rowH=Math.max(rowH,h);return out})}
@@ -177,18 +229,105 @@
 
   function demoBreakpoint(section){let width=760,minChart=430;const b=demoBase(section,range('bpWidth',lang==='zh'?'容器宽度':'Container width',420,1100,width)+range('minChart',lang==='zh'?'图表最低宽度':'Minimum chart width',320,560,minChart)+`<div class="metric-list"><div class="metric-row"><span>${lang==='zh'?'当前判断':'Current decision'}</span><b id="bpDecision">—</b><i><b id="bpBar" style="width:100%"></b></i></div></div>`);const svg=b.svg;const update=()=>{svg.selectAll('*').remove();const fails=width*.68<minChart,mode=fails?'STACK':'COLUMNS',frameW=620,scale=frameW/width;svg.append('rect').attr('x',50).attr('y',24).attr('width',620).attr('height',370).attr('rx',10).attr('fill','#fff').attr('stroke','#cfd6e5');const g=svg.append('g').attr('transform',`translate(50,35) scale(${scale})`);const mainW=fails?width-48:(width-66)*.68,sideW=fails?width-48:(width-66)*.32;const data=fails?[{id:'chart',x:24,y:40,w:mainW,h:145},{id:'ranking',x:24,y:202,w:sideW,h:95}]:[{id:'chart',x:24,y:40,w:mainW,h:255},{id:'ranking',x:42+mainW,y:40,w:sideW,h:255}];const cards=g.selectAll('g').data(data).join('g').attr('transform',d=>`translate(${d.x},${d.y})`);cards.append('rect').attr('class','svg-card').attr('width',d=>d.w).attr('height',d=>d.h).attr('rx',7/scale);cards.append('text').attr('class','svg-label').attr('x',14).attr('y',25).attr('font-size',12/scale).text(d=>nameOf(d.id));b.controls.querySelector('#bpDecision').textContent=mode;setStatus(b,fails?`主图预计只有 ${Math.round(width*.68)}px，小于最低 ${minChart}px，因此切换为上下堆叠。`:`主图仍有 ${Math.round(width*.68)}px，可以保留双栏。`,fails?`The chart would have ${Math.round(width*.68)}px, below its ${minChart}px minimum, so the layout stacks.`:`The chart retains ${Math.round(width*.68)}px, so columns remain viable.`)};[['bpWidth','width'],['minChart','minChart']].forEach(([id,key])=>{const el=b.controls.querySelector('#'+id);el.oninput=()=>{key==='width'?width=+el.value:minChart=+el.value;b.controls.querySelector('#'+id+'Out').textContent=`${el.value}px`;update()}});b.controls.querySelector('#bpWidthOut').textContent=`${width}px`;b.controls.querySelector('#minChartOut').textContent=`${minChart}px`;update()}
 
-  const badGood={
-    chart:{bad:[245,55,360,105],good:[45,145,430,190]},active:{bad:[48,48,170,112],good:[45,55,135,70]},complete:{bad:[70,218,220,72],good:[195,55,135,70]},ranking:{bad:[335,200,285,140],good:[493,145,180,190]},recent:{bad:[42,350,275,45],good:[45,352,628,45]}
-  };
-  function demoBeforeAfter(section){let stage=0;const labels=lang==='zh'?['混乱初稿','层级','网格','分组','响应式完成']:['Chaotic draft','Hierarchy','Grid','Grouping','Responsive finish'];const b=demoBase(section,range('caseStage',lang==='zh'?'重构阶段':'Redesign stage',0,4,stage)+`<div class="metric-list"><div class="metric-row"><span>${lang==='zh'?'当前阶段':'Current stage'}</span><b id="stageName">—</b><i><b id="stageBar"></b></i></div></div>`);const svg=b.svg;const data=baseModules().filter(d=>badGood[d.id]);const update=()=>{svg.selectAll('*').remove();svg.append('rect').attr('class','svg-frame').attr('x',18).attr('y',18).attr('width',684).attr('height',394).attr('rx',10);const t=stage/4,layout=data.map(d=>{const p=d3.interpolateArray(badGood[d.id].bad,badGood[d.id].good)(t);return {...d,x:p[0],y:p[1],w:p[2],h:p[3],main:d.id==='chart'}});const g=svg.selectAll('g').data(layout,d=>d.id).join('g').attr('transform',d=>`translate(${d.x},${d.y})`);g.each(function(d){drawCard(d3.select(this),d)});b.controls.querySelector('#stageName').textContent=labels[stage];b.controls.querySelector('#stageBar').style.width=`${stage/4*100}%`;setStatus(b,stage===0?'同一组模块没有层级、共享边缘或清晰分组。':`阶段 ${stage}：${labels[stage]}。所有模块身份保持不变。`,stage===0?'The same modules lack hierarchy, shared edges, and grouping.':`Stage ${stage}: ${labels[stage]}. Every module keeps its identity.`)};const el=b.controls.querySelector('#caseStage');el.oninput=()=>{stage=+el.value;b.controls.querySelector('#caseStageOut').textContent=`${stage}/4`;update()};b.controls.querySelector('#caseStageOut').textContent='0/4';update()}
+  const stageLayouts = [
+    {chart:[245,55,360,105],active:[48,48,170,112],complete:[70,218,220,72],ranking:[335,200,285,140],recent:[42,350,275,45]},
+    {chart:[225,95,430,190],active:[42,42,145,70],complete:[55,235,150,70],ranking:[375,300,245,82],recent:[38,340,285,45]},
+    {chart:[30,140,430,190],active:[30,50,150,70],complete:[190,50,150,70],ranking:[480,140,190,190],recent:[30,350,640,45]},
+    {chart:[30,150,430,180],active:[30,55,150,65],complete:[195,55,150,65],ranking:[480,150,190,180],recent:[30,352,640,43]},
+    {chart:[30,150,430,180],active:[30,55,150,65],complete:[195,55,150,65],ranking:[480,150,190,180],recent:[30,352,640,43]}
+  ];
+  function demoBeforeAfter(section){
+    let stage=0;
+    const labels=lang==='zh'?['混乱初稿','只修层级','只修网格','只修分组','多屏验证']:['Chaotic draft','Hierarchy only','Grid only','Grouping only','Multi-screen validation'];
+    const changes=lang==='zh'?['基线：四类结构问题同时存在。','主图获得最大面积，先建立明确主次。','卡片吸附共享列线，统一边缘与栏宽。','KPI 与分析区增加可见的组内/组间关系。','桌面几何保持不变，补充 375 / 768 / 1200px 验证。']:['Baseline: four structural problems coexist.','The chart gains the largest area to establish hierarchy.','Cards snap to shared columns, edges, and widths.','KPI and analysis regions gain explicit within/between relationships.','Desktop geometry stays fixed while 375 / 768 / 1200px are validated.'];
+    const b=demoBase(section,range('caseStage',lang==='zh'?'重构阶段':'Redesign stage',0,4,stage)+`<div class="metric-list"><div class="metric-row"><span>${lang==='zh'?'当前阶段':'Current stage'}</span><b id="stageName">—</b><i><b id="stageBar"></b></i></div></div>`);
+    const svg=b.svg;
+    svg.append('rect').attr('class','svg-frame').attr('x',18).attr('y',18).attr('width',684).attr('height',394).attr('rx',10);
+    const regionLayer=svg.append('g'),cardLayer=svg.append('g'),noteLayer=svg.append('g');
+    const data=baseModules().filter(d=>stageLayouts[0][d.id]);
+    const initial=data.map(d=>{const [x,y,w,h]=stageLayouts[0][d.id];return{...d,x,y,w,h,main:false}});
+    cardLayer.selectAll('g.stage-card').data(initial,d=>d.id).join('g').attr('class','stage-card').attr('transform',d=>`translate(${d.x},${d.y})`).each(function(d){drawCard(d3.select(this),d)});
+    const update=()=>{
+      const layout=data.map(d=>{const [x,y,w,h]=stageLayouts[stage][d.id];return{...d,x,y,w,h,main:d.id==='chart'&&stage>0}});
+      const cards=cardLayer.selectAll('g.stage-card').data(layout,d=>d.id);
+      cards.transition().duration(420).attr('transform',d=>`translate(${d.x},${d.y})`);
+      cards.select('rect').transition().duration(420).attr('width',d=>d.w).attr('height',d=>d.h).attr('class',d=>d.main?'svg-card main':'svg-card');
+      const regions=stage>=3?[{id:'kpi',x:22,y:42,w:334,h:91},{id:'analysis',x:22,y:137,w:660,h:205}]:[];
+      regionLayer.selectAll('rect').data(regions,d=>d.id).join('rect').attr('rx',11).attr('fill',chapter.accent).attr('fill-opacity','.055').attr('stroke',chapter.accent).attr('stroke-dasharray','5 4').transition().attr('x',d=>d.x).attr('y',d=>d.y).attr('width',d=>d.w).attr('height',d=>d.h);
+      const widths=stage===4?['375','768','1200']:[];
+      noteLayer.selectAll('text.width-badge').data(widths).join('text').attr('class','stage-note width-badge').attr('x',(d,i)=>520+i*52).attr('y',38).text(d=>`${d}px`);
+      b.controls.querySelector('#stageName').textContent=labels[stage];
+      b.controls.querySelector('#stageBar').style.width=`${stage/4*100}%`;
+      setStatus(b,changes[stage],changes[stage]);
+    };
+    const el=b.controls.querySelector('#caseStage');
+    el.oninput=()=>{stage=+el.value;b.controls.querySelector('#caseStageOut').textContent=`${stage}/4`;update()};
+    b.controls.querySelector('#caseStageOut').textContent='0/4';update();
+  }
 
-  function labMetrics(cards){const nearest=(v,step,offset=30)=>Math.round((v-offset)/step)*step+offset;const errors=cards.flatMap(d=>[Math.abs(d.x-nearest(d.x,80)),Math.abs(d.y-nearest(d.y,50,50))]);const alignment=Math.max(0,100-d3.mean(errors)*3);const gaps=cards.slice().sort((a,b)=>a.y-b.y).slice(1).map((d,i)=>Math.abs((d.y-(cards[i]?.y||0))-100));const spacing=Math.max(0,100-(d3.mean(gaps)||0));const main=cards.find(d=>d.id==='chart'),maxOther=d3.max(cards.filter(d=>d.id!=='chart'),d=>d.w*d.h);const hierarchy=Math.min(100,(main.w*main.h/maxOther)*42);const overflow=cards.filter(d=>d.x>=24&&d.y>=34&&d.x+d.w<=696&&d.y+d.h<=410).length/cards.length*100;return{alignment,spacing,hierarchy,overflow}}
-  function demoLabCore(section,xrayStart=false){let xray=xrayStart;const cards=[{id:'chart',x:42,y:145,w:390,h:180,value:'8.4K'},{id:'active',x:43,y:53,w:150,h:70,value:'8,392'},{id:'complete',x:221,y:62,w:145,h:70,value:'72%'},{id:'ranking',x:470,y:142,w:185,h:180,value:'#1'},{id:'recent',x:48,y:344,w:410,h:48,value:'24'}];const b=demoBase(section,`<label class="toggle-row"><input id="labXray" type="checkbox" ${xray?'checked':''}> ${lang==='zh'?'打开 Layout X-Ray':'Turn on Layout X-Ray'}</label><div class="demo-actions">${action('messLab',lang==='zh'?'制造问题':'Make it messy')}${action('resetLab',tx(C.ui.reset),true)}</div><div class="metric-list" id="labMetrics"></div><p style="margin-top:16px;font-size:.72rem;color:var(--muted)">${tx(C.ui.heuristic)}</p>`);const svg=b.svg;const initial=cards.map(d=>({...d}));
-    const update=()=>{svg.selectAll('*').remove();svg.append('rect').attr('class','svg-frame').attr('x',16).attr('y',16).attr('width',688).attr('height',398).attr('rx',10);if(xray){svg.selectAll('line.v').data(d3.range(30,700,80)).join('line').attr('class','guide-line').attr('x1',d=>d).attr('x2',d=>d).attr('y1',30).attr('y2',410);svg.selectAll('line.h').data(d3.range(50,410,50)).join('line').attr('class','guide-line').attr('x1',24).attr('x2',696).attr('y1',d=>d).attr('y2',d=>d)}const drag=d3.drag().on('drag',(e,d)=>{d.x=Math.max(20,Math.min(700-d.w,e.x-d.w/2));d.y=Math.max(20,Math.min(414-d.h,e.y-d.h/2));update()}).on('end',(e,d)=>{d.x=Math.max(30,Math.min(670-d.w,Math.round((d.x-30)/80)*80+30));d.y=Math.max(50,Math.min(410-d.h,Math.round((d.y-50)/50)*50+50));update()});const g=svg.selectAll('g.drag-card').data(cards,d=>d.id).join('g').attr('class','drag-card').attr('transform',d=>`translate(${d.x},${d.y})`).call(drag);g.each(function(d){drawCard(d3.select(this),d)});if(xray)g.append('text').attr('class','svg-meta').attr('x',d=>d.w-8).attr('y',d=>d.h-8).attr('text-anchor','end').text(d=>`${d.x},${d.y} · ${d.w}×${d.h}`);const m=labMetrics(cards),score=Math.round(m.alignment*.35+m.spacing*.25+m.hierarchy*.25+m.overflow*.15);b.controls.querySelector('#labMetrics').innerHTML=Object.entries(m).map(([k,v])=>`<div class="metric-row"><span>${({alignment:lang==='zh'?'对齐':'Alignment',spacing:lang==='zh'?'节奏':'Rhythm',hierarchy:lang==='zh'?'层级':'Hierarchy',overflow:lang==='zh'?'边界':'Bounds'})[k]}</span><b>${Math.round(v)}%</b><i><b style="width:${v}%"></b></i></div>`).join('');setStatus(b,`教学启发式 ${score}/100。${m.alignment<70?'下一步：先把边缘吸附到网格。':'下一步：检查主图是否足够突出。'}`,`Teaching heuristic ${score}/100. ${m.alignment<70?'Next: snap edges to the grid.':'Next: check whether the main chart is prominent enough.'}`)};
-    b.controls.querySelector('#labXray').onchange=e=>{xray=e.target.checked;update()};b.controls.querySelector('#messLab').onclick=()=>{cards.forEach((d,i)=>{d.x+=i%2?19:-13;d.y+=(i%3-1)*13});update()};b.controls.querySelector('#resetLab').onclick=()=>{cards.forEach((d,i)=>Object.assign(d,initial[i]));update()};update()}
+  function labMetrics(cards){
+    const nearest=(v,step,offset)=>Math.round((v-offset)/step)*step+offset;
+    const errors=cards.flatMap(d=>[Math.abs(d.x-nearest(d.x,80,30)),Math.abs(d.y-nearest(d.y,50,50))]);
+    const alignment=Math.max(0,100-d3.mean(errors)*3);
+    const byId=Object.fromEntries(cards.map(d=>[d.id,d]));
+    const gapChecks=[
+      {id:'kpi-gap',from:'active',to:'complete',axis:'x',target:24,value:byId.complete.x-(byId.active.x+byId.active.w)},
+      {id:'main-gap',from:'chart',to:'ranking',axis:'x',target:24,value:byId.ranking.x-(byId.chart.x+byId.chart.w)},
+      {id:'top-main',from:'active',to:'chart',axis:'y',target:20,value:byId.chart.y-(byId.active.y+byId.active.h)},
+      {id:'main-recent',from:'chart',to:'recent',axis:'y',target:20,value:byId.recent.y-(byId.chart.y+byId.chart.h)}
+    ];
+    const spacing=Math.max(0,100-d3.mean(gapChecks,d=>Math.abs(d.value-d.target))*3);
+    const main=byId.chart,maxOther=d3.max(cards.filter(d=>d.id!=='chart'),d=>d.w*d.h);
+    const hierarchy=Math.min(100,(main.w*main.h/maxOther)*42);
+    const overflow=cards.filter(d=>d.x>=24&&d.y>=34&&d.x+d.w<=696&&d.y+d.h<=410).length/cards.length*100;
+    return{alignment,spacing,hierarchy,overflow,gapChecks};
+  }
+  function demoLabCore(section,xrayStart=false){
+    let xray=xrayStart;
+    const cards=[{id:'chart',x:42,y:145,w:390,h:180,value:'8.4K'},{id:'active',x:43,y:53,w:150,h:70,value:'8,392'},{id:'complete',x:221,y:62,w:145,h:70,value:'72%'},{id:'ranking',x:470,y:142,w:185,h:180,value:'#1'},{id:'recent',x:48,y:344,w:410,h:48,value:'24'}];
+    const b=demoBase(section,`<label class="toggle-row"><input id="labXray" type="checkbox" ${xray?'checked':''}> ${lang==='zh'?'打开 Layout X-Ray':'Turn on Layout X-Ray'}</label><div class="demo-actions">${action('messLab',lang==='zh'?'制造问题':'Make it messy')}${action('resetLab',tx(C.ui.reset),true)}</div><div class="metric-list" id="labMetrics"></div><p style="margin-top:16px;font-size:.72rem;color:var(--muted)">${tx(C.ui.heuristic)}</p>`);
+    const svg=b.svg,initial=cards.map(d=>({...d}));
+    svg.append('rect').attr('class','svg-frame').attr('x',16).attr('y',16).attr('width',688).attr('height',398).attr('rx',10);
+    const guideLayer=svg.append('g'),cardLayer=svg.append('g'),diagnosticLayer=svg.append('g');
+    let update;
+    const clampCard=d=>{d.x=Math.max(20,Math.min(700-d.w,d.x));d.y=Math.max(20,Math.min(414-d.h,d.y))};
+    const drag=d3.drag().on('drag',(e,d)=>{d.x=e.x-d.w/2;d.y=e.y-d.h/2;clampCard(d);update()}).on('end',(e,d)=>{d.x=Math.max(30,Math.min(670-d.w,Math.round((d.x-30)/80)*80+30));d.y=Math.max(50,Math.min(410-d.h,Math.round((d.y-50)/50)*50+50));update()});
+    update=()=>{
+      guideLayer.selectAll('*').remove();diagnosticLayer.selectAll('*').remove();
+      if(xray){guideLayer.selectAll('line.v').data(d3.range(30,700,80)).join('line').attr('class','guide-line').attr('x1',d=>d).attr('x2',d=>d).attr('y1',30).attr('y2',410);guideLayer.selectAll('line.h').data(d3.range(50,410,50)).join('line').attr('class','guide-line').attr('x1',24).attr('x2',696).attr('y1',d=>d).attr('y2',d=>d)}
+      const g=cardLayer.selectAll('g.drag-card').data(cards,d=>d.id).join(enter=>{const node=enter.append('g').attr('class','drag-card');node.each(function(d){drawCard(d3.select(this),d)});return node;}).attr('transform',d=>`translate(${d.x},${d.y})`).attr('tabindex',0).attr('role','group').attr('aria-label',d=>`${nameOf(d.id)} · ${lang==='zh'?'方向键移动':'use arrow keys to move'}`).on('keydown',(e,d)=>{const step=e.shiftKey?16:8;if(e.key==='ArrowLeft')d.x-=step;else if(e.key==='ArrowRight')d.x+=step;else if(e.key==='ArrowUp')d.y-=step;else if(e.key==='ArrowDown')d.y+=step;else return;e.preventDefault();clampCard(d);update()}).call(drag);
+      g.select('rect').attr('width',d=>d.w).attr('height',d=>d.h);
+      g.selectAll('text.coords').data(xray?d=>[d]:()=>[]).join('text').attr('class','svg-meta coords').attr('x',d=>d.w-8).attr('y',d=>d.h-8).attr('text-anchor','end').text(d=>`${Math.round(d.x)},${Math.round(d.y)} · ${d.w}×${d.h}`);
+      const m=labMetrics(cards),metricValues={alignment:m.alignment,spacing:m.spacing,hierarchy:m.hierarchy,overflow:m.overflow};
+      if(xray){
+        const nearest=(v,step,offset)=>Math.round((v-offset)/step)*step+offset;
+        const vectors=cards.flatMap(d=>[{id:`${d.id}-x`,card:d.id,x1:d.x,y1:d.y+10,x2:nearest(d.x,80,30),y2:d.y+10,error:d.x-nearest(d.x,80,30),axis:'x'},{id:`${d.id}-y`,card:d.id,x1:d.x+10,y1:d.y,x2:d.x+10,y2:nearest(d.y,50,50),error:d.y-nearest(d.y,50,50),axis:'y'}]).filter(d=>Math.abs(d.error)>2);
+        diagnosticLayer.selectAll('line.error-vector').data(vectors,d=>d.id).join('line').attr('class','error-line error-vector').attr('x1',d=>d.x1).attr('y1',d=>d.y1).attr('x2',d=>d.x2).attr('y2',d=>d.y2);
+        diagnosticLayer.selectAll('text.error-vector').data(vectors,d=>d.id).join('text').attr('class','error-label error-vector').attr('x',d=>(d.x1+d.x2)/2+4).attr('y',d=>(d.y1+d.y2)/2-4).text(d=>`Δ${d.axis} ${Math.round(d.error)}px`);
+        const gapData=m.gapChecks.slice(0,2).map(d=>{const a=cards.find(c=>c.id===d.from),z=cards.find(c=>c.id===d.to);return{...d,x1:a.x+a.w,y1:(a.y+z.y)/2+22,x2:z.x,y2:(a.y+z.y)/2+22}});
+        diagnosticLayer.selectAll('line.gap-vector').data(gapData,d=>d.id).join('line').attr('class','gap-line gap-vector').attr('x1',d=>d.x1).attr('y1',d=>d.y1).attr('x2',d=>d.x2).attr('y2',d=>d.y2);
+        diagnosticLayer.selectAll('text.gap-vector').data(gapData,d=>d.id).join('text').attr('class','error-label gap-vector').attr('x',d=>(d.x1+d.x2)/2).attr('y',d=>d.y1-5).attr('text-anchor','middle').text(d=>`${Math.round(d.value)} / ${d.target}px`);
+      }
+      const score=Math.round(metricValues.alignment*.35+metricValues.spacing*.25+metricValues.hierarchy*.25+metricValues.overflow*.15);
+      b.controls.querySelector('#labMetrics').innerHTML=Object.entries(metricValues).map(([k,v])=>`<div class="metric-row"><span>${({alignment:lang==='zh'?'对齐':'Alignment',spacing:lang==='zh'?'节奏':'Rhythm',hierarchy:lang==='zh'?'层级':'Hierarchy',overflow:lang==='zh'?'边界':'Bounds'})[k]}</span><b>${Math.round(v)}%</b><i><b style="width:${v}%"></b></i></div>`).join('');
+      const worst=xray?cards.flatMap(d=>[{name:nameOf(d.id),axis:'x',error:d.x-(Math.round((d.x-30)/80)*80+30)},{name:nameOf(d.id),axis:'y',error:d.y-(Math.round((d.y-50)/50)*50+50)}]).sort((a,z)=>Math.abs(z.error)-Math.abs(a.error))[0]:null;
+      setStatus(b,xray&&worst&&Math.abs(worst.error)>2?`X-Ray：${worst.name} 的 ${worst.axis} 偏移 ${Math.round(worst.error)}px；沿红线反向移动。`:`教学启发式 ${score}/100。${metricValues.alignment<70?'下一步：先把边缘吸附到网格。':'下一步：检查主图是否足够突出。'}`,xray&&worst&&Math.abs(worst.error)>2?`X-Ray: ${worst.name} has a ${Math.round(worst.error)}px ${worst.axis} offset; move against the red vector.`:`Teaching heuristic ${score}/100. ${metricValues.alignment<70?'Next: snap edges to the grid.':'Next: check whether the main chart is prominent enough.'}`);
+    };
+    b.controls.querySelector('#labXray').onchange=e=>{xray=e.target.checked;update()};
+    b.controls.querySelector('#messLab').onclick=()=>{cards.forEach((d,i)=>{d.x+=i%2?19:-13;d.y+=(i%3-1)*13;clampCard(d)});update()};
+    b.controls.querySelector('#resetLab').onclick=()=>{cards.forEach((d,i)=>Object.assign(d,initial[i]));update()};update();
+  }
   function demoLab(s){demoLabCore(s,false)}function demoXray(s){demoLabCore(s,true)}
 
   function demoMultiscreen(section){let zoom=100;const b=demoBase(section,range('multiZoom',lang==='zh'?'文字缩放':'Text zoom',100,200,zoom,10)+`<p style="font-size:.78rem;color:var(--muted)">${lang==='zh'?'一套内容模型，同时生成桌面、平板和手机视图。':'One content model generates desktop, tablet, and mobile views.'}</p>`);const svg=b.svg;const screens=[{name:'DESKTOP',w:1180,x:24,drawW:315},{name:'TABLET',w:768,x:354,drawW:190},{name:'MOBILE',w:375,x:563,drawW:135}];const update=()=>{svg.selectAll('*').remove();screens.forEach(s=>{const scale=s.drawW/s.w,frameH=350;svg.append('rect').attr('x',s.x).attr('y',52).attr('width',s.drawW).attr('height',frameH).attr('rx',8).attr('fill','#fff').attr('stroke','#cfd6e5');svg.append('text').attr('class','svg-meta').attr('x',s.x).attr('y',35).text(`${s.name} · ${s.w}px`);const g=svg.append('g').attr('transform',`translate(${s.x},62) scale(${scale})`);const cards=layoutForWidth(s.w,true).map(d=>({...d,y:d.y*(zoom/100),h:d.h*(zoom/100)}));const cg=g.selectAll('g').data(cards,d=>d.id).join('g').attr('transform',d=>`translate(${d.x},${d.y})`);cg.append('rect').attr('class','svg-card').attr('width',d=>d.w).attr('height',d=>d.h).attr('rx',6/scale);cg.append('text').attr('class','svg-label').attr('x',10).attr('y',20).attr('font-size',Math.max(10,11/scale)).text(d=>nameOf(d.id))});setStatus(b,zoom>160?'200% 附近开始暴露固定高度与信息折叠风险。':'三种视图共享模块身份，只改变顺序、列数与尺寸。',zoom>160?'Near 200%, fixed heights and disclosure risks become visible.':'All three views share module identity; only order, columns, and size change.')};const el=b.controls.querySelector('#multiZoom');el.oninput=()=>{zoom=+el.value;b.controls.querySelector('#multiZoomOut').textContent=`${zoom}%`;update()};b.controls.querySelector('#multiZoomOut').textContent=`${zoom}%`;update()}
 
+  window.addEventListener('popstate', () => {
+    const route = new URLSearchParams(location.search);
+    const nextSection = Number(route.get('section'));
+    activeSection = Number.isInteger(nextSection) ? Math.max(0, Math.min(chapter.sections.length - 1, nextSection)) : 0;
+    activeTab = ['explain', 'code', 'demo'].includes(route.get('tab')) ? route.get('tab') : 'explain';
+    lang = ['zh', 'en'].includes(route.get('lang')) ? route.get('lang') : lang;
+    renderApp();
+  });
   renderApp();
 })();
