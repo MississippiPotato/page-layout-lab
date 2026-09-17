@@ -1,0 +1,19 @@
+<!doctype html><meta charset="utf-8"><title>quiz</title>
+<link rel="stylesheet" href="../viz.css"><link rel="stylesheet" href="../demo.css">
+<div id="mount"></div><pre id="out">running</pre>
+<script src="../vendor/d3.v7.min.js"></script>
+<script type="module">
+import { DEMOS } from '../js/demos/ch3.js';
+const mount = document.getElementById('mount');
+DEMOS.composition.render(mount, {
+  lang:'zh', section:{ title:{zh:'测试',en:'test'} },
+  chapter:{}, chapterIndex:2, accent:'#00a88f', reduced:true
+});
+// 模拟学习者点击第一个选项，触发实测判定
+mount.querySelector('.quiz-opt[data-opt="article"]').click();
+const rows=[...mount.querySelectorAll('.quiz-table tbody tr')].map(tr=>
+  [...tr.children].map(td=>td.textContent.trim()).join(' | ') + (tr.className.includes('is-best')?'   <== 最优':''));
+document.getElementById('out').textContent =
+  '点击「阅读型」后的实测结果表：\n' + rows.join('\n') +
+  '\n\n判定语：' + mount.querySelector('.quiz-verdict').textContent;
+</script>

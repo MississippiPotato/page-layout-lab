@@ -1,0 +1,33 @@
+<!doctype html><meta charset="utf-8"><pre id="out">running</pre>
+<script>
+// 由 iframe 载入各页面并检查页面级横向溢出
+const pages = ['/', '/lesson-01/?tab=demo', '/lesson-02/?tab=demo', '/lesson-03/?tab=demo',
+               '/lesson-04/?tab=demo', '/lesson-05/?tab=demo'];
+const widths = [375, 768, 1440];
+const out = [];
+(async () => {
+  for (const w of widths) {
+    for (const p of pages) {
+      const f = document.createElement('iframe');
+      f.style.cssText = `width:${w}px;height:900px;border:0;position:absolute;left:-9999px`;
+      f.src = p;
+      document.body.appendChild(f);
+      await new Promise(r => { f.onload = () => setTimeout(r, 1400); });
+      const d = f.contentDocument;
+      const de = d.documentElement;
+      const over = de.scrollWidth - de.clientWidth;
+      // 找出具体是哪个元素超出
+      let culprit = '';
+      if (over > 1) {
+        for (const el of d.querySelectorAll('*')) {
+          const r = el.getBoundingClientRect();
+          if (r.right > w + 1) { culprit = ' <- ' + el.tagName.toLowerCase() + '.' + (el.className||'').toString().split(' ')[0] + ' right=' + r.right.toFixed(0); break; }
+        }
+      }
+      out.push(`${String(w).padStart(4)}px  ${p.padEnd(26)} 溢出 ${String(over).padStart(4)}px ${over > 1 ? '✗' + culprit : '✓'}`);
+      f.remove();
+    }
+  }
+  document.getElementById('out').textContent = out.join('\n');
+})();
+</script>

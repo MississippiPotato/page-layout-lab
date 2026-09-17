@@ -1,0 +1,40 @@
+<!doctype html><meta charset="utf-8"><title>xray</title>
+<link rel="stylesheet" href="../styles.css"><link rel="stylesheet" href="../viz.css"><link rel="stylesheet" href="../demo.css">
+<body class="lesson-page" data-chapter="1">
+<div id="lessonApp"></div><pre id="out" style="position:relative;z-index:10000">running</pre>
+<script src="../vendor/d3.v7.min.js"></script>
+<script type="module">
+import { start } from '../js/shell.js';
+start();
+await new Promise(r => setTimeout(r, 600));
+const btn = document.getElementById('xraySiteBtn');
+const out = [];
+out.push('按钮存在: ' + !!btn);
+out.push('初始 aria-pressed: ' + btn.getAttribute('aria-pressed'));
+btn.click();
+await new Promise(r => setTimeout(r, 200));
+const ov = document.getElementById('siteXrayOverlay');
+const panel = document.querySelector('.xray-panel');
+out.push('点击后叠层出现: ' + !!ov);
+out.push('aria-pressed: ' + btn.getAttribute('aria-pressed'));
+if (ov) {
+  out.push('  列线 ' + ov.querySelectorAll('.xs-column').length +
+           ' 条 · 基线 ' + ov.querySelectorAll('.xs-baseline').length +
+           ' 条 · 触控目标 ' + ov.querySelectorAll('.xs-target').length + ' 个');
+  out.push('  不足 44px 的目标: ' + ov.querySelectorAll('.xs-target-small').length + ' 个');
+}
+
+// 列出具体是哪些元素不达标
+document.querySelectorAll('button, a, select, input[type=range]').forEach(el => {
+  const r = el.getBoundingClientRect();
+  if (r.width < 1 || r.height < 1) return;
+  if (r.width < 44 || r.height < 44)
+    out.push('  小: <' + el.tagName.toLowerCase() + ' class="' + el.className + '"> ' +
+             r.width.toFixed(0) + 'x' + r.height.toFixed(0) + '  "' + el.textContent.trim().slice(0,18) + '"');
+});
+if (panel) out.push('面板内容: ' + panel.textContent.replace(/\s+/g,' ').trim().slice(0,150));
+btn.click();
+await new Promise(r => setTimeout(r, 150));
+out.push('再次点击后叠层移除: ' + !document.getElementById('siteXrayOverlay'));
+document.getElementById('out').textContent = out.join('\n');
+</script>

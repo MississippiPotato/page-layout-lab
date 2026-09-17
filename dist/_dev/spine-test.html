@@ -1,0 +1,59 @@
+<!doctype html><meta charset="utf-8"><title>spine</title>
+<link rel="stylesheet" href="../styles.css"><link rel="stylesheet" href="../viz.css"><link rel="stylesheet" href="../demo.css">
+<div id="m1"></div><div id="m2"></div><pre id="out">running</pre>
+<script src="../vendor/d3.v7.min.js"></script>
+<script type="module">
+import { DEMOS as CH1 } from '../js/demos/ch1.js';
+import { DEMOS as CH5 } from '../js/demos/ch5.js';
+import { readState, resetState } from '../js/state.js';
+const out = [];
+const ctx = n => ({ lang:'zh', section:{ title:{zh:n,en:n} }, chapter:{}, chapterIndex:0, accent:'#ff6b4a', reduced:true });
+
+resetState();
+out.push('重置后 baseline: ' + readState().baseline);
+
+// ── 第 1-1 节：在乱稿上完成一次限时任务 ──
+const m1 = document.getElementById('m1');
+CH1.audit.render(m1, ctx('1-1'));
+const svg1 = m1.querySelector('svg');
+m1.querySelector('#startTask').click();
+await new Promise(r => setTimeout(r, 120));           // 让计时真的走一点
+// 先点错一次（点趋势图），再点对（编译原理那一行）
+const wrong = svg1.querySelector('g.mod[data-module="trend"]');
+wrong.dispatchEvent(new MouseEvent('click', { bubbles:true, clientX:10, clientY:10 }));
+const right = svg1.querySelector('g.rank-row[data-course="comp"]');
+out.push('找到答案行 (编译原理): ' + !!right);
+right.dispatchEvent(new MouseEvent('click', { bubbles:true, clientX:20, clientY:20 }));
+await new Promise(r => setTimeout(r, 60));
+
+const st1 = readState();
+out.push('baseline 已写入: ' + !!st1.baseline);
+if (st1.baseline) out.push('  用时 ' + st1.baseline.ms + 'ms · 误点 ' + st1.baseline.misclicks +
+                           ' · 轨迹点 ' + st1.baseline.path.length);
+
+// ── 第 5-4 节：读到基线，并完成复测 ──
+const m2 = document.getElementById('m2');
+CH5.multiscreen.render(m2, ctx('5-4'));
+const compareBefore = m2.querySelector('.probe-compare').textContent.replace(/\s+/g,' ');
+out.push('5-4 读到基线: ' + compareBefore.includes('第 1 章基线'));
+out.push('  对照区文字: ' + compareBefore.slice(0, 70));
+
+m2.querySelector('#reStart').click();
+await new Promise(r => setTimeout(r, 60));
+const svg2 = m2.querySelector('svg');
+const right2 = svg2.querySelector('g.rank-row[data-course="comp"]');
+out.push('复测页也有答案行: ' + !!right2);
+if (right2) {
+  right2.dispatchEvent(new MouseEvent('click', { bubbles:true, clientX:30, clientY:30 }));
+  await new Promise(r => setTimeout(r, 60));
+}
+const st2 = readState();
+out.push('retest 已写入: ' + !!st2.retest);
+out.push('两次并排显示: ' + m2.querySelector('.probe-compare').textContent.replace(/\s+/g,' ').slice(0,110));
+out.push('限定声明可见: ' + !!m2.querySelector('.probe-caveat'));
+out.push('  ' + (m2.querySelector('.probe-caveat')?.textContent || '').slice(0,60));
+
+// ── 栅格参数跨章 ──
+out.push('grid 跨章可读: ' + JSON.stringify(readState().grid));
+document.getElementById('out').textContent = out.join('\n');
+</script>
