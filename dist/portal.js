@@ -30,8 +30,9 @@ function render() {
       <div class="hero-copy">
         <p class="eyebrow">VISUALIZATION · LAYOUT CURRICULUM</p>
         <h1>${tx(C.meta.title)}<span class="hero-en">PAGE LAYOUT STUDIO</span></h1>
+        <p class="hero-intro"><strong>${tx(C.meta.caseLabel)}</strong> · ${tx(C.meta.intro)}</p>
         <p class="hero-question">${tx(C.meta.question)}</p>
-        <p class="hero-intro">${tx(C.meta.intro)}</p>
+        <p class="hero-journey">${tx(C.meta.journey)}</p>
         <div class="hero-stats">${C.meta.stats.map(d => `<span>${tx(d)}</span>`).join('')}</div>
       </div>
       <div class="hero-visual"><svg id="heroBlueprint" class="blueprint-stage" viewBox="0 0 560 390" role="img" aria-label="${lang === 'zh' ? '从混乱布局到清晰布局的动态演示' : 'Animated transition from chaotic to clear layout'}"></svg></div>
@@ -55,7 +56,7 @@ function render() {
     <div class="section-head"><div><p class="eyebrow" style="color:var(--primary)">COURSE MAP · 01—05</p><h2>${tx(C.ui.chapters)}</h2></div><p>${tx(C.meta.subtitle)}</p></div>
     <div class="chapter-grid">${cards}</div>
   </section>
-  <section id="route" class="route-section"><div class="section-head"><div><p class="eyebrow" style="color:var(--primary)">ONE CASE · FIVE DECISIONS</p><h2>${tx(C.ui.route)}</h2></div><p>${lang === 'zh' ? '五章都用 Campus Pulse 的同一套数据。先做查找任务，再调整布局，最后用原题复测；中间还要检查分组和窄屏。' : 'All five chapters use the same Campus Pulse data. Start with a search task, adjust the layout, and repeat that task at the end; grouping and small screens are checked along the way.'}</p></div><div class="route-track">${route}</div></section>
+  <section id="route" class="route-section"><div class="section-head"><div><p class="eyebrow" style="color:var(--primary)">ONE CASE · FIVE DECISIONS</p><h2>${tx(C.ui.route)}</h2></div><p>${tx(C.meta.routeIntro)}</p></div><div class="route-track">${route}</div></section>
   <section id="how" class="info-grid"><article class="info-panel"><h2>${tx(C.ui.how)}</h2><ol class="how-list">${C.how.map(d => `<li>${tx(d)}</li>`).join('')}</ol></article><article class="info-panel dark"><h2>${tx(C.ui.sources)}</h2><ul class="source-list">${C.sources.map(d => `<li>${d}</li>`).join('')}</ul></article></section>`;
   document.getElementById('siteFooter').textContent = tx(C.ui.footer);
   bindLanguage();
