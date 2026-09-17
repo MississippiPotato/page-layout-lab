@@ -1,0 +1,127 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>charts.js 自检 / self-test</title>
+<!-- 开发期自检页。不属于课程内容，部署时可忽略。 -->
+<link rel="stylesheet" href="../viz.css">
+<style>
+  body { margin: 0; font: 13px system-ui, sans-serif; background: #f4f6fb; }
+  .case { margin: 16px; padding: 12px; background: #fff; border: 1px solid #dfe4ef; border-radius: 10px; }
+  h2 { font-size: 13px; margin: 0 0 8px; }
+  svg { border: 1px dashed #c9d2e4; display: block; }
+  pre#out { margin: 16px; padding: 12px; background: #11182b; color: #d7dcea;
+            border-radius: 10px; white-space: pre-wrap; font: 12px ui-monospace, Consolas, monospace; }
+</style>
+
+<div id="cases"></div>
+<pre id="out">running…</pre>
+
+<script src="../vendor/d3.v7.min.js"></script>
+<script type="module">
+import d3 from '../js/d3.js';
+import { MODULES, MODULE_IDS, renderBoard, gridBand } from '../js/charts.js';
+import { labelCollisions, alignmentError, overflowCount, constraintViolations } from '../js/metrics.js';
+import * as data from '../data/campus.js';
+
+const log = [];
+const say = (...a) => log.push(a.join(' '));
+const ctx = { lang: 'zh', data, reduced: true };   // reduced:true → 关过渡，便于同步测量
+
+/** 按给定画布尺寸铺一个 12 列栅格布局 */
+function layoutAt(W, H) {
+  const band = gridBand(12, W, { margin: 20, gutter: 16 });
+  const col = (i, n) => ({ x: band(i), w: band.spanWidth(n) });
+  const rowTop = 16, r1 = Math.round(H * 0.46), gap = 14;
+  return [
+    { id: 'trend',      main: true, ...col(0, 7), y: rowTop, h: r1 },
+    { id: 'completion',             ...col(7, 2), y: rowTop, h: r1 },
+    { id: 'devices',                ...col(9, 3), y: rowTop, h: r1 },
+    { id: 'ranking',                ...col(0, 5), y: rowTop + r1 + gap, h: H - r1 - gap - rowTop - 16 },
+    { id: 'heat',                   ...col(5, 4), y: rowTop + r1 + gap, h: H - r1 - gap - rowTop - 16 },
+    { id: 'blurb',                  ...col(9, 3), y: rowTop + r1 + gap, h: H - r1 - gap - rowTop - 16 }
+  ];
+}
+
+function runCase(title, W, H) {
+  const wrap = d3.select('#cases').append('div').attr('class', 'case');
+  wrap.append('h2').text(`${title}  (${W}×${H})`);
+  const svg = wrap.append('svg').attr('width', W).attr('height', H).attr('viewBox', `0 0 ${W} ${H}`);
+  const boxes = renderBoard(svg, layoutAt(W, H), ctx);
+  const { violations } = constraintViolations(MODULES, boxes, ctx);
+  return { svg, boxes, violations, W, H };
+}
+
+// ── 1. 宽松画布：应当零违反 ────────────────────────────────────────────────
+const roomy = runCase('宽松', 1120, 620);
+say('【宽松 1120×620】违反数 =', roomy.violations.length);
+roomy.violations.forEach(v => say('   -', v.module, ':', v.zh));
+
+// ── 2. 局促画布：约束应当真的被触发 ────────────────────────────────────────
+const tight = runCase('局促', 560, 340);
+say('');
+say('【局促 560×340】违反数 =', tight.violations.length);
+tight.violations.forEach(v => say('   -', v.module, '[' + v.severity + ']', v.metric, '=', v.value, '|', v.zh));
+
+// ── 3. 极窄画布：趋势图标签必须真的重叠 ────────────────────────────────────
+const tiny = runCase('极窄', 380, 300);
+say('');
+say('【极窄 380×300】违反数 =', tiny.violations.length);
+tiny.violations.forEach(v => say('   -', v.module, '[' + v.severity + ']', v.metric, '=', v.value));
+
+// ── 4. 对象连续性：重渲染后 DOM 节点必须是同一批 ────────────────────────────
+say('');
+say('【对象连续性】——课程第 5-1 节教的东西，实现必须自己做到');
+const nodesBefore = roomy.svg.selectAll('g.mod').nodes();
+nodesBefore.forEach((n, i) => { n.__stamp = 'stamp-' + i; });
+const cellBefore = roomy.svg.select('g.mod[data-module=heat] rect.cell').node();
+cellBefore.__cellStamp = 'cell-kept';
+
+renderBoard(roomy.svg, layoutAt(1000, 560), ctx);   // 换尺寸重渲染
+
+const nodesAfter = roomy.svg.selectAll('g.mod').nodes();
+const kept = nodesAfter.filter(n => n.__stamp).length;
+const cellAfter = roomy.svg.select('g.mod[data-module=heat] rect.cell').node();
+say('   模块 <g> 总数        :', nodesAfter.length, '(应为 6)');
+say('   重渲染后仍是原节点   :', kept, '/', nodesBefore.length, kept === 6 ? '✓' : '✗ 元素被重建了');
+say('   热力图首个单元格保留 :', cellAfter && cellAfter.__cellStamp === 'cell-kept' ? '✓' : '✗ 被重建');
+say('   heat 单元格总数      :', roomy.svg.selectAll('g.mod[data-module=heat] rect.cell').size(), '(应为 84)');
+
+// ── 5. scaleBand 就是栅格：paddingInner 反算 gutter 的正确性 ────────────────
+say('');
+say('【scaleBand = 栅格】');
+for (const [cols, gut] of [[12, 16], [12, 24], [8, 20], [6, 32]]) {
+  const b = gridBand(cols, 1120, { margin: 20, gutter: gut });
+  const actualGutter = b.step() - b.bandwidth();
+  say(`   ${cols} 列 / 目标 gutter ${gut}px  →  实际 ${actualGutter.toFixed(2)}px`,
+      Math.abs(actualGutter - gut) < 0.51 ? '✓' : '✗');
+  say(`      列宽 bandwidth = ${b.bandwidth().toFixed(1)}px · 跨 7 列 = ${b.spanWidth(7).toFixed(1)}px · 列线 ${b.lines.length} 条`);
+}
+
+// ── 6. 实测能力自检 ────────────────────────────────────────────────────────
+say('');
+say('【实测函数】');
+const tks = tiny.svg.select('g.mod[data-module=trend]').node().__ticks;
+const col = labelCollisions(tks, 'x');
+say('   极窄画布下 trend 轴标签碰撞 =', col.count, '处，最大重叠', col.worst, 'px',
+    col.count > 0 ? '✓ 碰撞是实测出来的' : '✗ 没测到碰撞');
+const band = gridBand(12, 1120, { margin: 20, gutter: 16 });
+const al = alignmentError(roomy.boxes.map(b => ({ id: b.id, x: b.x, w: b.w })), band.lines);
+say('   栅格内对齐误差均值 =', al.mean, 'px', al.mean < 1 ? '✓ 卡片确实落在列线上' : '(注意)');
+
+// -- 7. 溢出实测：故意把一个模块推出画布 --------------------------------
+say('');
+say('【溢出实测】');
+const ovCase = runCase('溢出', 900, 480);
+const pushed = layoutAt(900, 480);
+pushed.find(b => b.id === 'devices').x += 260;      // 推出右边界
+renderBoard(ovCase.svg, pushed, ctx);
+const frame = { x: 0, y: 0, width: 900, height: 480 };
+const ov = overflowCount(ovCase.svg.selectAll('g.mod').nodes(), frame);
+say('   推出 1 个模块后，实测越界数 =', ov.count, ov.count === 1 ? '✓' : '✗ 期望 1');
+say('   越界模块 =', ov.items.map(i => i.id).join(',') || '(无)');
+const ctrl = runCase('未溢出对照', 900, 480);
+const ovClean = overflowCount(ctrl.svg.selectAll('g.mod').nodes(), frame);
+say('   对照组（正常布局）越界数 =', ovClean.count, ovClean.count === 0 ? '✓' : '✗ 期望 0');
+
+document.getElementById('out').textContent = log.join('\n');
+document.title = 'DONE';
+</script>

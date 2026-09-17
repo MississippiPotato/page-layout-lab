@@ -7,14 +7,15 @@
   <title>页面布局实战课 · Page Layout Studio</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2311182b'/%3E%3Cpath d='M14 15h36v9H14zm0 14h21v20H14zm26 0h10v20H40z' fill='%2336d8c2'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="./styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <link rel="stylesheet" href="./viz.css">
+  <link rel="stylesheet" href="./demo.css">
+  <script src="vendor/d3.v7.min.js"></script>
 </head>
 <body class="portal-page">
   <header id="portalHero" class="portal-hero"></header>
   <nav id="portalNav" class="portal-nav" aria-label="课程导航"></nav>
   <main id="portalMain"></main>
   <footer id="siteFooter" class="site-footer"></footer>
-  <script src="./course-data.js"></script>
-  <script src="./portal.js"></script>
+  <script type="module" src="./portal.js"></script>
 </body>
 </html>

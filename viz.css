@@ -1,0 +1,124 @@
+/**
+ * viz.css —— 看板模块的 SVG 视觉词汇。
+ *
+ * 图表的字号、字重、色彩全部写在 CSS 里，JS 只负责几何。
+ * 这样做有三个好处：
+ *   1. 第 4-3 节的"文字缩放 200%"只需改一个 CSS 变量，就能真实作用到 SVG 文本，
+ *      并被 getComputedTextLength() 量到——不用在 JS 里模拟缩放。
+ *   2. 实测（碰撞、每行字符数）量到的就是真实渲染结果。
+ *   3. 图表与页面共用同一套字体与色板，视觉上是一个系统。
+ */
+
+:root {
+  /* 文本缩放因子：第 4-3 节直接改它，全部 SVG 文本随之变化 */
+  --viz-text-scale: 1;
+
+  /* 数据色（经 dataviz 校验器在 #ffffff 表面通过；与章节主题色 --accent 无关） */
+  --viz-1: #2a78d6;
+  --viz-2: #eb6834;
+  --viz-3: #1baf7a;
+
+  /* 图表 chrome 与文本 */
+  --viz-ink: #0b0b0b;
+  --viz-ink-soft: #52514e;
+  --viz-muted: #898781;
+  --viz-grid: #e1e0d9;
+  --viz-axis: #c3c2b7;
+  --viz-surface: #ffffff;
+  --viz-card: #ffffff;
+  --viz-card-line: #e3e7f0;
+  --viz-critical: #d03b3b;
+}
+
+/* ── 卡片外壳 ─────────────────────────────────────────────────────────── */
+.mod-bg {
+  fill: var(--viz-card);
+  stroke: var(--viz-card-line);
+  stroke-width: 1;
+}
+/* 主模块：用更实的边框而不是更艳的填充来建立层级——
+   层级应当由面积和位置承担，颜色只做补充确认。 */
+.mod-bg.is-main {
+  stroke: color-mix(in srgb, var(--viz-1), #fff 55%);
+  stroke-width: 1.5;
+}
+
+.mod-title {
+  font-size: calc(11.5px * var(--viz-text-scale));
+  font-weight: 650;
+  fill: var(--viz-ink);
+  letter-spacing: .01em;
+}
+
+/* ── 坐标轴与网格 ─────────────────────────────────────────────────────── */
+.tick-x, .tick-y {
+  font-size: calc(10px * var(--viz-text-scale));
+  fill: var(--viz-muted);
+  font-variant-numeric: tabular-nums;
+}
+.gridline { stroke-width: 1; shape-rendering: crispEdges; }
+
+/* ── 趋势 ─────────────────────────────────────────────────────────────── */
+.trend-line { stroke-linecap: round; }
+
+/* ── 热力图 ───────────────────────────────────────────────────────────── */
+.cell { shape-rendering: crispEdges; }
+.heat-day { font-size: calc(9.5px * var(--viz-text-scale)); }
+
+/* ── 排行 ─────────────────────────────────────────────────────────────── */
+.rank-name {
+  font-size: calc(10.5px * var(--viz-text-scale));
+  fill: var(--viz-ink-soft);
+}
+.rank-value {
+  font-size: calc(10.5px * var(--viz-text-scale));
+  fill: var(--viz-ink);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.rank-row { cursor: pointer; }
+.rank-row:focus-visible { outline: 3px solid var(--viz-1); outline-offset: 2px; }
+
+/* ── 完成率环形 ───────────────────────────────────────────────────────── */
+.donut-num {
+  fill: var(--viz-ink);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 设备分布 ─────────────────────────────────────────────────────────── */
+/* aqua 段在白底上对比度 2.82 < 3:1，故标签是必需的补偿，不可省略 */
+.seg-label {
+  font-size: calc(10px * var(--viz-text-scale));
+  fill: var(--viz-ink-soft);
+}
+
+/* ── 说明文本 ─────────────────────────────────────────────────────────── */
+.blurb {
+  font-size: calc(10.5px * var(--viz-text-scale));
+  fill: var(--viz-ink-soft);
+}
+
+/* 所有 SVG 文本统一走页面字体栈，保证实测结果与真实渲染一致 */
+svg text {
+  font-family: Inter, "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  svg * { transition: none !important; }
+}
+
+/* 设备分布：段内百分比（选择性直接标注）与常驻图例 */
+.seg-inline {
+  font-size: calc(9.5px * var(--viz-text-scale));
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 门户首屏：深色底上的看板说明文字 */
+.hero-caption {
+  font-size: 11px;
+  font-weight: 650;
+  fill: #8d9ab8;
+  letter-spacing: .04em;
+}

@@ -1,0 +1,19 @@
+<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="../viz.css"><link rel="stylesheet" href="../demo.css">
+<div id="m"></div><pre id="out">running</pre>
+<script src="../vendor/d3.v7.min.js"></script>
+<script type="module">
+import { DEMOS } from '../js/demos/ch5.js';
+const m=document.getElementById('m');
+DEMOS.beforeafter.render(m,{lang:'zh',section:{title:{zh:'t',en:'t'}},chapter:{},chapterIndex:4,accent:'#2f6fed',reduced:true});
+const el=m.querySelector('#stage');
+const out=['阶段  标签        碰撞  对齐误差   违反   排行是否已排序'];
+for(let i=0;i<=5;i++){
+  el.value=i; el.dispatchEvent(new Event('input'));
+  const vals=[...m.querySelectorAll('.metric-row b')].map(b=>b.textContent.trim());
+  const lbl=m.querySelector('#stageLabel').textContent.split('·')[1].trim();
+  const pct=[...m.querySelectorAll('.rank-value')].map(t=>parseInt(t.textContent));
+  const sorted = pct.every((v,j,a)=>j===0||a[j-1]>=v);
+  out.push(`  ${i}   ${lbl.padEnd(10)}  ${vals[0].padStart(3)}  ${vals[1].padStart(8)}  ${vals[2].padStart(4)}   ${sorted?'是':'否'}`);
+}
+document.getElementById('out').textContent=out.join('\n');
+</script>
