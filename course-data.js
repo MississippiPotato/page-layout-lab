@@ -20,15 +20,18 @@ const S = (id, titleZh, titleEn, subtitleZh, subtitleEn, demo, theory, key, pit)
 export const COURSE = {
   meta: {
     title: B('页面布局实战课', 'Page Layout Studio'),
-    subtitle: B('同一张校园学习看板，逐步检查并调整布局', 'Rework one campus dashboard, one layout decision at a time'),
-    question: B('页面能用，为什么仍然难读？', 'The page works. Why is it still hard to read?'),
-    intro: B('Campus Pulse 汇总八门课程、十二周的学习数据。先在旧版看板上找信息，再逐章调整排序、栅格、分组和窄屏布局，最后回到同一道题复测。', 'Campus Pulse shows learning data for eight courses across twelve weeks. Try a task on the draft, adjust its ordering, grid, grouping, and narrow layout, then repeat the task on the rebuilt board.'),
+    subtitle: B('从一张难用的学习看板出发，弄清每一步布局修改解决了什么问题', 'Start with a hard-to-use learning dashboard and see what each layout change fixes'),
+    caseLabel: B('案例是什么', 'The case'),
+    intro: B('Campus Pulse 是一张模拟的校园学习看板：它汇总 8 门课程在 12 个教学周里的活跃趋势、完成率排行、学习时段和设备来源。教务人员用它先看整体变化，再定位完成率偏低的课程。', 'Campus Pulse is a simulated campus learning dashboard. It shows activity trends, completion rankings, study times, and device use for eight courses over twelve teaching weeks. An academic staff member checks the overall pattern, then finds courses with low completion.'),
+    question: B('你能在这张初稿里快速找出完成率最低的课程吗？', 'Can you quickly find the lowest-completion course on this draft?'),
+    journey: B('先在第一章亲自找一次答案；接着整理信息优先级、栅格、分组和窄屏顺序；最后重构同一张看板，再做同一道题。每一章都接着前一章的结果往下走。', 'Try the search in Chapter 1. Then work through information priority, the grid, grouping, and narrow-screen order. Finally, rebuild the same dashboard and repeat the task. Each chapter carries earlier decisions forward.'),
+    routeIntro: B('同一张看板从初稿走到重构版：先确认查找卡在哪里，再决定信息怎么排、空间怎么分、窄屏怎么读，最后复测。', 'Follow the same dashboard from draft to redesign: find where the search gets stuck, decide how to order and place information, check narrow screens, then repeat the task.'),
     stats: [B('5 个递进章节', '5 connected chapters'), B('20 个教学小节', '20 lesson sections'), B('20 个 D3 互动实验', '20 interactive D3 labs')]
   },
   ui: {
     portal: B('课程门户', 'Course Portal'),
     chapters: B('课程章节', 'Course Chapters'),
-    route: B('案例路线', 'Case Route'),
+    route: B('一张看板的五步改造', 'One Dashboard, Five Decisions'),
     how: B('学习方式', 'How to Learn'),
     sources: B('理论来源', 'Theory Sources'),
     enter: B('进入章节', 'Enter chapter'),
