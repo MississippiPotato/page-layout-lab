@@ -1,0 +1,29 @@
+<!doctype html><meta charset="utf-8"><title>snippets 自检</title>
+<pre id="out">running</pre>
+<script type="module">
+import { extract, extractAll, highlight } from '../js/snippets.js';
+const o=[];
+const src='../js/charts.js';
+for (const name of ['band','margin','trend','trend-scale','trend-join','heat','heat-band','rank-band','blurb-measure']) {
+  const r = await extract(src, name);
+  if (!r) { o.push(`${name}: FAIL 抽取不到`); continue; }
+  const first = r.code.split('\n').find(l=>l.trim() && !l.trim().startsWith('*') && !l.trim().startsWith('/*'));
+  o.push(`${name}: ${r.code.split('\n').length} 行, 源文件 L${r.lines[0]}-${r.lines[1]}`);
+  o.push(`   首行代码: ${(first||'').slice(0,70)}`);
+}
+// 核心断言：抽出来的 band 片段必须真的含 scaleBand —— 代码页不能再说谎
+const band = await extract(src,'band');
+o.push('');
+o.push('band 片段真的包含 d3.scaleBand(): ' + (band.code.includes('d3.scaleBand()') ? 'YES ✓' : 'NO ✗'));
+o.push('band 片段真的包含 paddingInner:  ' + (band.code.includes('paddingInner') ? 'YES ✓' : 'NO ✗'));
+const trend = await extract(src,'trend');
+o.push('trend 片段真的包含 d3.line():    ' + (trend.code.includes('d3.line()') ? 'YES ✓' : 'NO ✗'));
+o.push('trend 片段不含 selectAll("*"):   ' + (!trend.code.includes("selectAll('*')") ? 'YES ✓' : 'NO ✗'));
+o.push('');
+o.push('抽不到的名字返回 null: ' + (await extract(src,'nope') === null ? 'YES ✓' : 'NO ✗'));
+o.push('坏 URL 返回 null:      ' + (await extract('../js/nope.js','band') === null ? 'YES ✓' : 'NO ✗'));
+o.push('');
+o.push('高亮输出片段:');
+o.push(highlight(band.code.split('\n').slice(-6).join('\n')).slice(0,420));
+document.getElementById('out').textContent=o.join('\n');
+</script>
