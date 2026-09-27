@@ -1,0 +1,568 @@
+/**
+ * demo.css —— 演示层的界面样式（控制栏、实测读数、体检卡、栅格辅助线）。
+ *
+ * 与 viz.css 的分工：viz.css 管图表本身的视觉词汇，
+ * 这里管包在图表外面的实验装置。
+ */
+
+/* ── 演示外壳 ─────────────────────────────────────────────────────────── */
+.demo-shell {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+.demo-controls {
+  padding: 16px;
+  background: #f7f9fd;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.demo-controls h4 {
+  margin: 0 0 14px;
+  font: 700 .7rem/1.2 ui-monospace, SFMono-Regular, Consolas, monospace;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.demo-canvas svg {
+  width: 100%;
+  height: auto;
+  max-height: none;
+  background: #fbfcfe;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+/* 演示时把宽度交给图表，章节导航改为内容上方的下拉框。 */
+@media (min-width: 981px) {
+  .lesson-page:has(.tab-panel.active .demo-shell) .lesson-hero { display: none; }
+  .lesson-page:has(.tab-panel.active .demo-shell) .lesson-shell {
+    display: block;
+    max-width: 1700px;
+    padding: 20px 24px 70px;
+  }
+  .lesson-page:has(.tab-panel.active .demo-shell) .chapter-sidebar { display: none; }
+  .lesson-page:has(.tab-panel.active .demo-shell) .mobile-section-select {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 450px;
+    margin: 0 0 12px;
+    color: var(--muted);
+    font-size: .82rem;
+  }
+  .lesson-page:has(.tab-panel.active .demo-shell) .mobile-section-select select {
+    flex: 1;
+    min-height: 40px;
+    padding: 6px 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+  }
+  .lesson-page:has(.tab-panel.active .demo-shell) .tab-panel.active { padding: 20px 24px 28px; }
+  .lesson-page:has(.tab-panel.active .demo-shell) .section-banner { padding: 17px 24px; }
+  .lesson-page:has(.tab-panel.active .demo-shell) .lesson-tabs button { padding-block: 11px; }
+  .lesson-page:has(.tab-panel.active .demo-shell) .demo-intro { margin-bottom: 10px; }
+  .lesson-page:has(.tab-panel.active .demo-shell) .demo-canvas { padding: 12px; }
+}
+.demo-expand {
+  justify-self: end;
+  margin: 0 0 8px;
+  padding: 7px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: .82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.demo-expand:hover { border-color: var(--accent, var(--primary)); }
+.demo-shell:fullscreen {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  align-items: stretch;
+  gap: 12px;
+  padding: 18px;
+  overflow: auto;
+  background: #f7f9fd;
+}
+.demo-shell:fullscreen .demo-controls { display: block; }
+.demo-shell:fullscreen .demo-canvas {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-width: 0;
+  overflow: visible;
+}
+.demo-shell:fullscreen .demo-expand { align-self: flex-end; }
+.demo-shell:fullscreen .demo-canvas svg {
+  flex: 0 1 auto;
+  width: min(100%, calc((100vh - 120px) * 1.63));
+  max-height: calc(100vh - 120px);
+}
+.demo-shell:fullscreen .demo-status { position: static; max-width: 100%; }
+
+/* ── 控件 ─────────────────────────────────────────────────────────────── */
+.control-group { margin-bottom: 14px; }
+.control-group label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: .82rem;
+  color: var(--ink);
+}
+.control-group label b {
+  font-variant-numeric: tabular-nums;
+  color: var(--accent, var(--primary));
+  font-size: .8rem;
+}
+.control-group input[type=range] { width: 100%; accent-color: var(--accent, var(--primary)); }
+.control-group select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 34px;
+  font-size: .82rem;
+  cursor: pointer;
+}
+.toggle-row input { accent-color: var(--accent, var(--primary)); width: 16px; height: 16px; }
+
+.demo-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+.demo-btn {
+  flex: 1 1 auto;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #fff;
+  font-size: .8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.demo-btn:hover { border-color: var(--accent, var(--primary)); }
+.demo-btn.primary {
+  color: #fff;
+  background: var(--accent, var(--primary));
+  border-color: transparent;
+}
+
+/* ── 实测读数 ─────────────────────────────────────────────────────────── */
+.metric-list {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.metric-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  padding: 5px 0;
+  font-size: .8rem;
+  color: var(--muted);
+}
+.metric-row b {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+/* 未达标用状态色 + 文字，不只靠颜色 */
+.metric-row b.bad { color: #d03b3b; }
+.metric-row b.bad::after { content: " !"; font-weight: 800; }
+
+/* ── 体检卡 ───────────────────────────────────────────────────────────── */
+.health-card {
+  margin-top: 16px;
+  padding: 13px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-left: 3px solid #d03b3b;
+  border-radius: 10px;
+}
+.health-card.is-ok { border-left-color: #0ca30c; }
+.health-card h5 {
+  margin: 0 0 9px;
+  font-size: .76rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.health-card ul { margin: 0; padding: 0; list-style: none; }
+.health-card li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 3px 0;
+  font-size: .78rem;
+}
+.health-card li b { font-variant-numeric: tabular-nums; }
+.health-card li.bad b { color: #d03b3b; }
+.health-card li.ok b { color: #0ca30c; }
+.health-next {
+  margin: 9px 0 0;
+  font-size: .78rem;
+  line-height: 1.55;
+  color: var(--ink);
+}
+.health-note {
+  margin: 7px 0 0;
+  font-size: .72rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+/* ── 状态行与提示 ─────────────────────────────────────────────────────── */
+.demo-status {
+  margin-top: 11px;
+  padding: 11px 13px;
+  background: color-mix(in srgb, var(--accent, var(--primary)), #fff 93%);
+  border-radius: 9px;
+  font-size: .82rem;
+  line-height: 1.6;
+}
+.demo-hint {
+  margin: 9px 0 0;
+  font-size: .76rem;
+  color: var(--muted);
+}
+.demo-pending {
+  padding: 26px;
+  text-align: center;
+  color: var(--muted);
+  background: #f7f9fd;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+}
+
+/* ── 栅格辅助线（SVG） ────────────────────────────────────────────────── */
+.page-frame { fill: #fff; stroke: var(--line); }
+.col-band { fill: color-mix(in srgb, var(--accent, var(--primary)), #fff 90%); }
+.col-gutter { fill: color-mix(in srgb, #d03b3b, #fff 91%); }
+.baseline { stroke: color-mix(in srgb, var(--accent, var(--primary)), #fff 72%); stroke-width: .5; }
+
+/* 对齐误差向量：红线 + 数字，误差是画出来的距离而不是一个分数 */
+.error-vector { stroke: #d03b3b; stroke-width: 1.5; }
+.error-label {
+  font-size: 9px;
+  font-weight: 700;
+  fill: #d03b3b;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 关键代码面板 ─────────────────────────────────────────────────────── */
+.code-live {
+  background: color-mix(in srgb, #0ca30c, #fff 92%);
+  border-left: 3px solid #0ca30c;
+}
+.code-origin {
+  font: 600 .7rem/1 ui-monospace, Consolas, monospace;
+  color: var(--muted);
+}
+.code-loading, .code-missing { color: var(--muted); font-size: .82rem; }
+
+/* 语法高亮（六类词，旧版把关键字全标成同一类） */
+.code-point pre code .cmt { color: #7b8496; font-style: italic; }
+.code-point pre code .str { color: #86efac; }
+.code-point pre code .num { color: #fbbf24; }
+.code-point pre code .kw  { color: #f472b6; }
+.code-point pre code .fn  { color: #60a5fa; }
+.code-point pre code .mth { color: #7dd3fc; }
+
+/* ── 顶栏 X-Ray 按钮 ──────────────────────────────────────────────────── */
+.topbar-tools { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+.xray-toggle {
+  min-height: 44px;
+  padding: 0 13px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  font-size: .78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.xray-toggle[aria-pressed="true"] {
+  color: #fff;
+  background: var(--ink);
+  border-color: var(--ink);
+}
+
+/* ── 窄屏 ─────────────────────────────────────────────────────────────── */
+@media (max-width: 980px) {
+  .demo-shell { grid-template-columns: 1fr; }
+  .demo-controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 0 18px;
+  }
+  .demo-controls h4 { grid-column: 1 / -1; }
+  .metric-list, .health-card { grid-column: 1 / -1; }
+}
+@media (max-width: 720px) {
+  .demo-controls { grid-template-columns: 1fr; }
+  .topbar-tools { width: 100%; justify-content: space-between; }
+}
+
+/* 旧 styles.css 把 .demo-status 设成了 position:absolute（浮在画布右下角）。
+   新版演示的状态行排在画布下方，因此显式改回文档流。 */
+.demo-canvas .demo-status { position: static; max-width: none; }
+
+/* ══ 第 1 章：限时任务、诊断叠层、优先级矩阵、阅读路径 ══════════════════ */
+
+/* ── 限时任务 ─────────────────────────────────────────────────────────── */
+.task-block { margin-bottom: 4px; }
+.task-block h5 {
+  margin: 0 0 7px;
+  font-size: .76rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.task-prompt { margin: 0 0 5px; font-size: .88rem; font-weight: 650; color: var(--ink); }
+.task-sub { margin: 0; font-size: .76rem; line-height: 1.5; color: var(--muted); }
+.task-result { display: flex; align-items: baseline; gap: 9px; margin-top: 8px; }
+.task-result b { font-size: 1.5rem; font-variant-numeric: tabular-nums; color: var(--accent, var(--primary)); }
+.task-result span { font-size: .76rem; color: var(--muted); }
+
+.control-sep { margin: 16px 0 13px; border: 0; border-top: 1px solid var(--line); }
+.control-label {
+  margin: 0 0 9px;
+  font-size: .76rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.control-note { margin: 12px 0 0; font-size: .72rem; line-height: 1.55; color: var(--muted); }
+
+/* 计时中给画布一个明确的"已就绪"态 */
+.probe-armed { cursor: crosshair; outline: 2px solid var(--accent, var(--primary)); }
+.probe-miss rect.mod-bg, rect.probe-miss { stroke: #d03b3b !important; stroke-width: 2.5 !important; }
+.probe-hit  rect.mod-bg, rect.probe-hit  { stroke: #0ca30c !important; stroke-width: 2.5 !important; }
+
+/* 真实点击轨迹 */
+.probe-line { fill: none; stroke: #eb6834; stroke-width: 2; stroke-dasharray: 5 4; opacity: .85; }
+.probe-dot { fill: #eb6834; stroke: #fff; stroke-width: 1.5; }
+.probe-dot.is-last { fill: #0ca30c; }
+.probe-num { font-size: 8.5px; font-weight: 800; fill: #fff; }
+
+/* 两次运行的对照 */
+.probe-compare { margin-top: 14px; padding-top: 13px; border-top: 1px solid var(--line); }
+.probe-compare ul { margin: 0; padding: 0; list-style: none; }
+.probe-compare li {
+  display: flex; align-items: baseline; gap: 8px;
+  padding: 4px 0; font-size: .78rem;
+}
+.probe-compare li span { flex: 1; color: var(--muted); }
+.probe-compare li b { font-variant-numeric: tabular-nums; font-size: .95rem; }
+.probe-compare li i { font-style: normal; font-size: .7rem; color: var(--muted); }
+.probe-compare li.pending b { color: var(--line); }
+.probe-delta { margin: 7px 0 0; font-size: .84rem; font-weight: 700; }
+.probe-delta.good { color: #0ca30c; }
+.probe-delta.bad { color: #d03b3b; }
+/* 这句是结论的必要限定，不允许被折叠或弱化到读不见 */
+.probe-caveat {
+  margin: 9px 0 0;
+  padding: 8px 10px;
+  font-size: .71rem;
+  line-height: 1.55;
+  color: #78350f;
+  background: #fffbeb;
+  border-left: 3px solid #f59e0b;
+  border-radius: 0 6px 6px 0;
+}
+
+/* ── 诊断叠层 ─────────────────────────────────────────────────────────── */
+.issue-box {
+  fill: color-mix(in srgb, #eb6834, transparent 92%);
+  stroke: #eb6834;
+  stroke-width: 1.5;
+  stroke-dasharray: 6 4;
+}
+.issue-tag {
+  font-size: 10px;
+  font-weight: 800;
+  fill: #eb6834;
+  letter-spacing: .04em;
+}
+
+/* ── 优先级矩阵 ───────────────────────────────────────────────────────── */
+.pnode { cursor: grab; }
+.pnode:active { cursor: grabbing; }
+.pnode:focus-visible { outline: 3px solid var(--accent, var(--primary)); outline-offset: 3px; }
+.pnode-dot { stroke: #fff; stroke-width: 2; }
+.pnode-label { font-size: 10px; font-weight: 650; fill: var(--viz-ink-soft, #52514e); }
+.quad { stroke: var(--line); stroke-dasharray: 4 4; }
+.axis-title-x, .axis-title-y { font-size: 10.5px; font-weight: 650; fill: var(--muted); }
+.axis-x text, .axis-y text { font-size: 10px; fill: var(--muted); }
+
+.priority-list { margin: 0; padding: 0; list-style: none; counter-reset: p; }
+.priority-list li {
+  display: flex; align-items: baseline; gap: 8px;
+  padding: 5px 0; font-size: .8rem;
+  border-bottom: 1px solid var(--line);
+}
+.priority-list li b { margin-left: auto; font-variant-numeric: tabular-nums; color: var(--muted); font-weight: 600; }
+.rank-no {
+  display: grid; place-items: center;
+  width: 19px; height: 19px;
+  font-size: .68rem; font-weight: 800;
+  color: #fff; background: var(--accent, var(--primary));
+  border-radius: 5px;
+}
+
+/* ── 阅读路径 ─────────────────────────────────────────────────────────── */
+.pred-line {
+  fill: none;
+  stroke: var(--accent, var(--primary));
+  stroke-width: 2;
+  opacity: .5;
+}
+.pred-num {
+  font-size: 11px; font-weight: 800;
+  fill: var(--accent, var(--primary));
+  paint-order: stroke; stroke: #fff; stroke-width: 3.5;
+}
+.real-line { fill: none; stroke: #eb6834; stroke-width: 2; stroke-dasharray: 5 4; }
+.real-dot { fill: #eb6834; stroke: #fff; stroke-width: 1.5; }
+
+/* ══ 第 4 章：设备框、触控目标、断点扫描图 ══════════════════════════════ */
+.device-shell { fill: #fff; stroke: var(--line); stroke-width: 1.5; }
+.device-label {
+  font-size: 10px; font-weight: 700;
+  fill: var(--muted); letter-spacing: .04em;
+}
+.device-inner { clip-path: inset(0 round 10px); }
+
+/* 触控目标：不足 44px 时同时改颜色与描边样式，不只靠颜色 */
+.touch-spot {
+  fill: color-mix(in srgb, var(--accent, var(--primary)), transparent 84%);
+  stroke: var(--accent, var(--primary));
+  stroke-width: 1.5;
+}
+.touch-spot.too-small { stroke: #d03b3b; stroke-dasharray: 4 3; fill: color-mix(in srgb, #d03b3b, transparent 88%); }
+
+/* 断点扫描图 */
+.bp-title { font-size: 10.5px; font-weight: 650; fill: var(--muted); }
+.bp-line { fill: none; stroke: #eb6834; stroke-width: 2; }
+.bp-mark { stroke: var(--ink); stroke-width: 1; stroke-dasharray: 3 3; opacity: .55; }
+.bp-mark-label { font-size: 9.5px; font-weight: 750; fill: var(--ink); font-variant-numeric: tabular-nums; }
+.bp-cursor { stroke: var(--accent, var(--primary)); stroke-width: 2; }
+.bp-axis-x text, .bp-axis-y text { font-size: 9.5px; fill: var(--muted); }
+/* 结构断点用虚线，可读性断点（能用↔不能用）用实线红色区分 */
+.bp-mark.is-usability { stroke: #d03b3b; stroke-dasharray: none; opacity: .9; stroke-width: 1.5; }
+
+/* ══ 第 3 章：共同区域、扫视路径、小测 ══════════════════════════════════ */
+.region {
+  fill: color-mix(in srgb, var(--accent, var(--primary)), transparent 92%);
+  stroke: var(--accent, var(--primary));
+  stroke-width: 1.5;
+  stroke-dasharray: 7 5;
+}
+.region-label {
+  font-size: 10.5px; font-weight: 750;
+  fill: var(--accent, var(--primary)); letter-spacing: .03em;
+}
+/* 灰度模拟：用于验证"只靠颜色分组"会不会失效 */
+.demo-canvas.is-grayscale svg { filter: grayscale(1); }
+
+.scan-path { fill: none; stroke: #eb6834; stroke-width: 2.5; stroke-dasharray: 6 4; }
+.scan-stop { fill: #eb6834; stroke: #fff; stroke-width: 2; }
+.scan-num { font-size: 10px; font-weight: 800; fill: #fff; }
+
+/* ── 小测（教学装置借自参考课程，判分改为实测） ────────────────────────── */
+.quiz-block h5 {
+  margin: 0 0 7px;
+  font-size: .76rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted);
+}
+.quiz-options { display: grid; gap: 8px; margin: 12px 0; }
+.quiz-opt {
+  display: grid; gap: 2px;
+  min-height: 44px; padding: 9px 11px;
+  text-align: left;
+  border: 1px solid var(--line); border-radius: 9px; background: #fff;
+  cursor: pointer;
+}
+.quiz-opt:hover { border-color: var(--accent, var(--primary)); }
+.quiz-opt b { font-size: .84rem; }
+.quiz-opt span { font-size: .72rem; line-height: 1.45; color: var(--muted); }
+.quiz-opt.is-picked { border-color: var(--accent, var(--primary)); border-width: 2px; }
+/* 正确项同时用边框与 ✓ 标出，不只靠颜色 */
+.quiz-opt.is-best b::after { content: " ✓"; color: #0ca30c; font-weight: 800; }
+
+.quiz-verdict { margin: 10px 0 8px; font-size: .86rem; font-weight: 700; }
+.quiz-verdict.good { color: #0ca30c; }
+.quiz-verdict.bad { color: #d03b3b; }
+.quiz-table { width: 100%; border-collapse: collapse; font-size: .74rem; }
+.quiz-table th, .quiz-table td { padding: 4px 5px; text-align: left; border-bottom: 1px solid var(--line); }
+.quiz-table th { font-weight: 650; color: var(--muted); }
+.quiz-table td.bad { color: #d03b3b; font-weight: 700; }
+.quiz-table td.ok { color: #0ca30c; font-weight: 700; }
+.quiz-table tr.is-best td:first-child::after { content: " ✓"; color: #0ca30c; font-weight: 800; }
+/* 首屏折线：以下内容需要滚动才能看到 */
+.fold { stroke: #d03b3b; stroke-width: 1.5; stroke-dasharray: 8 5; opacity: .8; }
+.fold-label { font-size: 9.5px; font-weight: 700; fill: #d03b3b; letter-spacing: .05em; }
+
+/* ══ 第 5 章：回放、实验室、X-Ray、多屏 ══════════════════════════════════ */
+.stage-label { margin: 10px 0 3px; font-size: .84rem; font-weight: 700; color: var(--accent, var(--primary)); }
+.stage-change { margin: 0; font-size: .76rem; line-height: 1.55; color: var(--muted); }
+
+.lab-grid .guide, .xray .guide { stroke: var(--accent, var(--primary)); stroke-width: .75; opacity: .45; }
+.mod.is-dragging { cursor: grabbing; }
+.mod:focus-visible { outline: 3px solid var(--accent, var(--primary)); outline-offset: 2px; }
+/* 违反约束的模块：红框 + 虚线，两种通道，不只靠颜色 */
+.mod.is-violating rect.mod-bg { stroke: #d03b3b; stroke-width: 2; stroke-dasharray: 5 3; }
+.size-label {
+  font-size: 9px; font-weight: 600; fill: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ══ 审视本站：叠层与面板 ═══════════════════════════════════════════════ */
+#siteXrayOverlay .xs-baseline { stroke: #2a78d6; stroke-width: .5; opacity: .16; }
+#siteXrayOverlay .xs-column { stroke: #eb6834; stroke-width: 1; opacity: .5; stroke-dasharray: 6 4; }
+#siteXrayOverlay .xs-container { fill: none; stroke: #2a78d6; stroke-width: 1.5; stroke-dasharray: 8 5; }
+#siteXrayOverlay .xs-target { fill: rgba(42,120,214,.10); stroke: #2a78d6; stroke-width: 1; }
+#siteXrayOverlay .xs-target-small { fill: rgba(208,59,59,.14); stroke: #d03b3b; stroke-dasharray: 3 2; }
+
+.xray-panel {
+  position: fixed; right: 16px; bottom: 16px; z-index: 9999;
+  width: 268px; padding: 14px;
+  font-size: .78rem; line-height: 1.55;
+  color: #eef1f8; background: rgba(17,24,43,.96);
+  border-radius: 12px; box-shadow: 0 18px 44px rgba(10,16,34,.4);
+}
+.xray-panel h5 { margin: 0 0 9px; font-size: .74rem; letter-spacing: .08em; text-transform: uppercase; color: #8d9ab8; }
+.xray-panel ul { margin: 0 0 9px; padding: 0; list-style: none; }
+.xray-panel li { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; }
+.xray-panel li b { font-variant-numeric: tabular-nums; }
+.xray-panel li.bad b { color: #ff8f8f; }
+.xray-panel li.ok b { color: #7ee2a8; }
+.xray-panel p { margin: 0; font-size: .72rem; color: #b8c2d8; }
+
+/* ══ 本站自审的结果 ═════════════════════════════════════════════════════
+ * 顶栏那颗「审视本站」按钮量出本站自己有 7 个可点元素高度只有 39–43px，
+ * 低于课程第 4-3 节讲的 WCAG 2.5.5 建议值（44×44px）。
+ * 讲了就得做到——这里把它们补齐。
+ * 改完后再点一次那颗按钮，面板应当显示"不足 44px 的目标：0"。
+ */
+.course-topbar .back-portal,
+.course-chapter-tabs a,
+.section-nav button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+.section-nav button { width: 100%; }
